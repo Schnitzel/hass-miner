@@ -1,0 +1,21 @@
+{
+  "title": "Miner",
+  "config": {
+    "step": {
+      "user": {
+        "data": {
+          "ip": "[%key:common::config_flow::data::ip%]"
+        }
+      },
+      "hostname": {
+        "data": {
+          "hostname": "[%key:common::config_flow::data::hostname%]"
+        }
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "[%key:common::config_flow::abort::single_instance_allowed%]",
+      "no_devices_found": "[%key:common::config_flow::abort::no_devices_found%]"
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "domain": "miner",
+  "name": "miner",
+  "documentation": "https://github.com/Schnitzel/miner",
+  "issue_tracker": "https://github.com/Schnitzel/miner/issues",
+  "dependencies": [],
+  "config_flow": true,
+  "codeowners": ["@Schnitzel"],
+  "requirements": []
+}
