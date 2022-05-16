@@ -43,7 +43,7 @@ class MinerCoordinator(DataUpdateCoordinator):
             hass=hass,
             logger=_LOGGER,
             name=entry.title,
-            update_interval=timedelta(seconds=30),
+            update_interval=timedelta(seconds=10),
             request_refresh_debouncer=Debouncer(
                 hass,
                 _LOGGER,
@@ -72,23 +72,30 @@ class MinerCoordinator(DataUpdateCoordinator):
         data["model"] = miner_data["Model"]
         data["ip"] = miner_data["IP"]
         # data["version"] = miner_version
-        data["entries"] = {}
-        data["entries"]["temperature"] = miner_data["Temperature"]
-        data["entries"]["hashrate"] = miner_data["Hashrate"]
+        data["sensors"] = {}
+        data["sensors"]["temperature"] = miner_data["Temperature"]
+        data["sensors"]["hashrate"] = miner_data["Hashrate"]
 
+        data["number"] = {}
         tuner = tunerstatus.get("TUNERSTATUS")
         if tuner:
             if len(tuner) > 0:
                 power_limit = tuner[0].get("PowerLimit")
                 if power_limit:
-                    data["entries"]["power_limit"] = power_limit
+                    data["number"]["power_limit"] = power_limit
                 miner_consumption = tuner[0].get("ApproximateMinerPowerConsumption")
                 if miner_consumption:
-                    data["entries"]["miner_consumption"] = miner_consumption
+                    data["sensors"]["miner_consumption"] = miner_consumption
+                else:
+                    data["sensors"]["miner_consumption"] = None
                 dynamic_power_scaling = tuner[0].get("DynamicPowerScaling")
-                if dynamic_power_scaling:
+                if dynamic_power_scaling == "InitialPowerLimit":
+                    data["sensors"]["scaled_power_limit"] = power_limit
+                else:
                     scaled_power_limit = dynamic_power_scaling.get("ScaledPowerLimit")
                     if scaled_power_limit:
-                        data["entries"]["scaled_power_limit"] = scaled_power_limit
+                        data["sensors"]["scaled_power_limit"] = scaled_power_limit
+                    else:
+                        data["sensors"]["scaled_power_limit"] = None
 
         return data

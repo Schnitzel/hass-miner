@@ -80,13 +80,6 @@ ENTITY_DESCRIPTION_KEY_MAP: dict[
         native_unit_of_measurement=POWER_WATT,
         device_class=SensorDeviceClass.POWER,
     ),
-    # "Foobar": MinerNumberEntityDescription(
-    #     "Foobar",
-    #     native_unit_of_measurement=TEMP_CELSIUS,
-    #     state_class=SensorStateClass.MEASUREMENT,
-    #     device_class=SensorDeviceClass.TEMPERATURE,
-    #     entity_registry_enabled_default=False,
-    # ),
 }
 
 
@@ -106,26 +99,19 @@ async def async_setup_entry(
         description = ENTITY_DESCRIPTION_KEY_MAP.get(
             key, MinerSensorEntityDescription("base_sensor")
         )
-        if isinstance(description, MinerSensorEntityDescription):
-            return MinerSensor(
-                coordinator=coordinator, key=key, entity_description=description
-            )
-        # if isinstance(description, MinerNumberEntityDescription):
-        #     return MinerNumber(
-        #         coordinator=coordinator,
-        #         key=key,
-        #         entity_description=description,
-        #     )
+        return MinerSensor(
+            coordinator=coordinator, key=key, entity_description=description
+        )
 
     await coordinator.async_config_entry_first_refresh()
-    async_add_entities(_create_entity(key) for key in coordinator.data["entries"])
+    async_add_entities(_create_entity(key) for key in coordinator.data["sensors"])
 
     @callback
     def new_data_received():
         """Check for new sensors."""
         entities = [
             _create_entity(key)
-            for key in coordinator.data["entries"]
+            for key in coordinator.data["sensors"]
             if key not in created
         ]
         if entities:
@@ -154,7 +140,7 @@ class MinerSensor(CoordinatorEntity[MinerCoordinator], SensorEntity):
     @property
     def _sensor_data(self):
         """Return sensor data."""
-        return self.coordinator.data["entries"][self._key]
+        return self.coordinator.data["sensors"][self._key]
 
     @property
     def name(self) -> str | None:
@@ -220,7 +206,7 @@ class MinerSensor(CoordinatorEntity[MinerCoordinator], SensorEntity):
 #     @property
 #     def _sensor_data(self) -> Sensor:
 #         """Return sensor data."""
-#         return self.coordinator.data["entries"][self._key]
+#         return self.coordinator.data["sensors"][self._key]
 
 #     @property
 #     def name(self) -> str | None:

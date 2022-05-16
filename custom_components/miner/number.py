@@ -4,6 +4,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 import logging
+import yaml
 from unittest import case
 
 from homeassistant.components import switch
@@ -14,8 +15,8 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.components.switch import (
-    SwitchEntity,
+from homeassistant.components.number import (
+    NumberEntity,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
@@ -35,13 +36,6 @@ from .coordinator import MinerCoordinator
 _LOGGER = logging.getLogger(__name__)
 
 
-@dataclass
-class MinerSensorEntityDescription(SensorEntityDescription):
-    """Class describing IotaWatt sensor entities."""
-
-    value: Callable | None = None
-
-
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
@@ -52,14 +46,14 @@ async def async_setup_entry(
     created = set()
 
     @callback
-    def _create_entity(key: str) -> SwitchEntity:
+    def _create_entity(key: str) -> NumberEntity:
         """Create a sensor entity."""
         created.add(key)
 
     await coordinator.async_config_entry_first_refresh()
     async_add_entities(
         [
-            MinerActiveSwitch(
+            MinerPowerLimitNumber(
                 coordinator=coordinator,
             )
         ]
@@ -77,8 +71,8 @@ async def async_setup_entry(
     # coordinator.async_add_listener(new_data_received)
 
 
-class MinerActiveSwitch(CoordinatorEntity[MinerCoordinator], SwitchEntity):
-    """Defines a Miner Switch to pause and unpause the miner."""
+class MinerPowerLimitNumber(CoordinatorEntity[MinerCoordinator], NumberEntity):
+    """Defines a Miner Number to set the Power Limit of the Miner"""
 
     def __init__(
         self,
@@ -86,13 +80,18 @@ class MinerActiveSwitch(CoordinatorEntity[MinerCoordinator], SwitchEntity):
     ) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator=coordinator)
-        self._attr_unique_id = f"{self.coordinator.data['hostname']}-active"
-        self._attr_is_on = self.coordinator.data["sensors"]["temperature"] != 0
+        self._attr_unique_id = f"{self.coordinator.data['hostname']}-power_limit"
+
+        self._attr_value = self.coordinator.data["number"]["power_limit"]
+
+        self._attr_min_value = 100
+        self._attr_max_value = 5000
+        self._attr_step = 100
 
     @property
     def name(self) -> str | None:
         """Return name of the entity."""
-        return f"{self.coordinator.data['hostname']} active"
+        return f"{self.coordinator.data['hostname']} PowerLimit"
 
     @property
     def device_info(self) -> entity.DeviceInfo:
@@ -104,23 +103,22 @@ class MinerActiveSwitch(CoordinatorEntity[MinerCoordinator], SwitchEntity):
             name=f"Antminer {self.coordinator.data['model']}",
         )
 
-    async def async_turn_on(self) -> None:
-        """Turn on miner."""
-        self._attr_is_on = True
-        await self.coordinator.miner.api.resume()
-        self.async_write_ha_state()
+    async def async_set_value(self, value):
+        """Update the current value."""
 
-    async def async_turn_off(self) -> None:
-        """Turn off miner."""
-        self._attr_is_on = False
-        await self.coordinator.miner.api.pause()
+        miner = self.coordinator.miner
+        await miner.get_config()
+        updated_config = yaml.load(miner.config, Loader=yaml.SafeLoader)
+        updated_config["autotuning"]["wattage"] = int(value)
+        config_yaml = yaml.dump(updated_config, sort_keys=False)
+        await miner.send_config(config_yaml)
+
+        self._attr_value = value
         self.async_write_ha_state()
 
     @callback
     def _handle_coordinator_update(self) -> None:
 
-        # There isn't really a good way to check if the Miner is on.
-        # But when it's off there is no temperature reported, so we use this
-        self._attr_is_on = self.coordinator.data["sensors"]["temperature"] != 0
+        self._attr_value = self.coordinator.data["number"]["power_limit"]
 
         super()._handle_coordinator_update()
