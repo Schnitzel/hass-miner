@@ -1,2 +1,2 @@
 homeassistant
-minerinterface==0.5.2
+minerinterface==0.5.3
