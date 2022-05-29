@@ -82,7 +82,7 @@ class MinerPowerLimitNumber(CoordinatorEntity[MinerCoordinator], NumberEntity):
         super().__init__(coordinator=coordinator)
         self._attr_unique_id = f"{self.coordinator.data['hostname']}-power_limit"
 
-        self._attr_value = self.coordinator.data["number"]["power_limit"]
+        self._attr_value = self.coordinator.data["miner_sensors"]["power_limit"]
 
         self._attr_min_value = 100
         self._attr_max_value = 5000
@@ -91,7 +91,7 @@ class MinerPowerLimitNumber(CoordinatorEntity[MinerCoordinator], NumberEntity):
     @property
     def name(self) -> str | None:
         """Return name of the entity."""
-        return f"{self.coordinator.data['hostname']} PowerLimit"
+        return f"{self.coordinator.data['hostname']} Power Limit"
 
     @property
     def device_info(self) -> entity.DeviceInfo:
@@ -119,6 +119,6 @@ class MinerPowerLimitNumber(CoordinatorEntity[MinerCoordinator], NumberEntity):
     @callback
     def _handle_coordinator_update(self) -> None:
 
-        self._attr_value = self.coordinator.data["number"]["power_limit"]
+        self._attr_value = self.coordinator.data["miner_sensors"]["power_limit"]
 
         super()._handle_coordinator_update()

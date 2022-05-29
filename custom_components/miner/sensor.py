@@ -58,9 +58,29 @@ ENTITY_DESCRIPTION_KEY_MAP: dict[
         state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.TEMPERATURE,
     ),
+    "board_temperature": MinerSensorEntityDescription(
+        "Board Temperature",
+        native_unit_of_measurement=TEMP_CELSIUS,
+        state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.TEMPERATURE,
+    ),
+    "chip_temperature": MinerSensorEntityDescription(
+        "Chip Temperature",
+        native_unit_of_measurement=TEMP_CELSIUS,
+        state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.TEMPERATURE,
+    ),
     "hashrate": MinerSensorEntityDescription(
         "Hashrate",
+        native_unit_of_measurement="TH/s",
         state_class=SensorStateClass.MEASUREMENT,
+        device_class="Hashrate",
+    ),
+    "board_hashrate": MinerSensorEntityDescription(
+        "Board Hashrate",
+        native_unit_of_measurement="TH/s",
+        state_class=SensorStateClass.MEASUREMENT,
+        device_class="Hashrate",
     ),
     "power_limit": MinerSensorEntityDescription(
         "Power Limit",
@@ -90,12 +110,12 @@ async def async_setup_entry(
 ) -> None:
     """Add sensors for passed config_entry in HA."""
     coordinator: MinerCoordinator = hass.data[DOMAIN][config_entry.entry_id]
-    created = set()
+    sensor_created = set()
 
     @callback
-    def _create_entity(key: str) -> MinerSensor:
-        """Create a sensor entity."""
-        created.add(key)
+    def _create_miner_entity(key: str) -> MinerSensor:
+        """Create a miner sensor entity."""
+        sensor_created.add(key)
         description = ENTITY_DESCRIPTION_KEY_MAP.get(
             key, MinerSensorEntityDescription("base_sensor")
         )
@@ -103,19 +123,51 @@ async def async_setup_entry(
             coordinator=coordinator, key=key, entity_description=description
         )
 
+    @callback
+    def _create_board_entity(board: str, sensor: str) -> MinerBoardSensor:
+        """Create a board sensor entity."""
+        sensor_created.add(f"{board}-{sensor}")
+        description = ENTITY_DESCRIPTION_KEY_MAP.get(
+            sensor, MinerSensorEntityDescription("base_sensor")
+        )
+        return MinerBoardSensor(
+            coordinator=coordinator,
+            board=board,
+            sensor=sensor,
+            entity_description=description,
+        )
+
     await coordinator.async_config_entry_first_refresh()
-    async_add_entities(_create_entity(key) for key in coordinator.data["sensors"])
+    async_add_entities(
+        _create_miner_entity(key) for key in coordinator.data["miner_sensors"]
+    )
+    if coordinator.data["board_sensors"]:
+        for board in coordinator.data["board_sensors"]:
+            async_add_entities(
+                _create_board_entity(board, sensor)
+                for sensor in coordinator.data["board_sensors"][board]
+            )
 
     @callback
     def new_data_received():
         """Check for new sensors."""
         entities = [
-            _create_entity(key)
-            for key in coordinator.data["sensors"]
-            if key not in created
+            _create_miner_entity(key)
+            for key in coordinator.data["miner_sensors"]
+            if key not in sensor_created
         ]
         if entities:
             async_add_entities(entities)
+
+        if coordinator.data["board_sensors"]:
+            for board in coordinator.data["board_sensors"]:
+                board_entities = [
+                    _create_board_entity(board, sensor)
+                    for sensor in coordinator.data["board_sensors"][board]
+                    if f"{board}-{sensor}" not in sensor_created
+                ]
+                if board_entities:
+                    async_add_entities(board_entities)
 
     coordinator.async_add_listener(new_data_received)
 
@@ -136,11 +188,12 @@ class MinerSensor(CoordinatorEntity[MinerCoordinator], SensorEntity):
         self._attr_unique_id = f"{self.coordinator.data['hostname']}-{key}"
         self._key = key
         self.entity_description = entity_description
+        self._attr_force_update = True
 
     @property
     def _sensor_data(self):
         """Return sensor data."""
-        return self.coordinator.data["sensors"][self._key]
+        return self.coordinator.data["miner_sensors"][self._key]
 
     @property
     def name(self) -> str | None:
@@ -155,30 +208,13 @@ class MinerSensor(CoordinatorEntity[MinerCoordinator], SensorEntity):
             manufacturer="Antminer",
             model=self.coordinator.data["model"],
             name=f"Antminer {self.coordinator.data['model']}",
-            # sw_version=self.coordinator.data["version"],
         )
 
     @callback
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
-        # if self._key not in self.coordinator.data:
-        #     if self._attr_unique_id:
-        #         entity_registry.async_get(self.hass).async_remove(self.entity_id)
-        #     else:
-        #         self.hass.async_create_task(self.async_remove())
-        #     return
 
         super()._handle_coordinator_update()
-
-    # @property
-    # def extra_state_attributes(self) -> dict[str, str]:
-    #     """Return the extra state attributes of the entity."""
-    #     data = self._sensor_data
-    #     attrs = {"type": data.getType()}
-    #     if attrs["type"] == "Input":
-    #         attrs["channel"] = data.getChannel()
-
-    #     return attrs
 
     @property
     def native_value(self) -> StateType:
@@ -186,64 +222,53 @@ class MinerSensor(CoordinatorEntity[MinerCoordinator], SensorEntity):
         return self._sensor_data
 
 
-# class MinerNumber(CoordinatorEntity[MinerCoordinator], NumberEntity):
-#     """Defines a Miner Sensor."""
+class MinerBoardSensor(CoordinatorEntity[MinerCoordinator], SensorEntity):
+    """Defines a Miner Sensor."""
 
-#     entity_description: MinerNumberEntityDescription
+    entity_description: MinerSensorEntityDescription
 
-#     def __init__(
-#         self,
-#         coordinator: MinerCoordinator,
-#         key: str,
-#         entity_description: MinerNumberEntityDescription,
-#     ) -> None:
-#         """Initialize the sensor."""
-#         super().__init__(coordinator=coordinator)
+    def __init__(
+        self,
+        coordinator: MinerCoordinator,
+        board: str,
+        sensor: str,
+        entity_description: MinerSensorEntityDescription,
+    ) -> None:
+        """Initialize the sensor."""
+        super().__init__(coordinator=coordinator)
+        self._attr_unique_id = f"{self.coordinator.data['hostname']}-{board}-{sensor}"
+        self._board = board
+        self._sensor = sensor
+        self.entity_description = entity_description
+        self._attr_force_update = True
 
-#         self._key = key
-#         self.entity_description = entity_description
+    @property
+    def _sensor_data(self):
+        """Return sensor data."""
+        return self.coordinator.data["board_sensors"][self._board][self._sensor]
 
-#     @property
-#     def _sensor_data(self) -> Sensor:
-#         """Return sensor data."""
-#         return self.coordinator.data["sensors"][self._key]
+    @property
+    def name(self) -> str | None:
+        """Return name of the entity."""
+        return f"{self.coordinator.data['hostname']} Board #{self._board} {self.entity_description.key}"
 
-#     @property
-#     def name(self) -> str | None:
-#         """Return name of the entity."""
-#         return self._key
+    @property
+    def device_info(self) -> entity.DeviceInfo:
+        """Return device info."""
+        return entity.DeviceInfo(
+            identifiers={(DOMAIN, self.coordinator.data["hostname"])},
+            manufacturer="Antminer",
+            model=self.coordinator.data["model"],
+            name=f"Antminer {self.coordinator.data['model']}",
+        )
 
-#     @property
-#     def device_info(self) -> entity.DeviceInfo:
-#         """Return device info."""
-#         return entity.DeviceInfo(
-#             manufacturer="Antminer",
-#             model="S9",
-#         )
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Handle updated data from the coordinator."""
 
-#     @callback
-#     def _handle_coordinator_update(self) -> None:
-#         """Handle updated data from the coordinator."""
-#         if self._key not in self.coordinator.data:
-#             if self._attr_unique_id:
-#                 entity_registry.async_get(self.hass).async_remove(self.entity_id)
-#             else:
-#                 self.hass.async_create_task(self.async_remove())
-#             return
+        super()._handle_coordinator_update()
 
-#         super()._handle_coordinator_update()
-
-#     # @property
-#     # def extra_state_attributes(self) -> dict[str, str]:
-#     #     """Return the extra state attributes of the entity."""
-#     #     data = self._sensor_data
-#     #     attrs = {"type": data.getType()}
-#     #     if attrs["type"] == "Input":
-#     #         attrs["channel"] = data.getChannel()
-
-#     #     return attrs
-
-#     @property
-#     def native_value(self) -> StateType:
-#         """Return the state of the sensor."""
-#         return self._sensor_data
+    @property
+    def native_value(self) -> StateType:
+        """Return the state of the sensor."""
+        return self._sensor_data

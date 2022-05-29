@@ -87,7 +87,7 @@ class MinerActiveSwitch(CoordinatorEntity[MinerCoordinator], SwitchEntity):
         """Initialize the sensor."""
         super().__init__(coordinator=coordinator)
         self._attr_unique_id = f"{self.coordinator.data['hostname']}-active"
-        self._attr_is_on = self.coordinator.data["sensors"]["temperature"] != 0
+        self._attr_is_on = self.coordinator.data["miner_sensors"]["temperature"] != 0
 
     @property
     def name(self) -> str | None:
@@ -121,6 +121,6 @@ class MinerActiveSwitch(CoordinatorEntity[MinerCoordinator], SwitchEntity):
 
         # There isn't really a good way to check if the Miner is on.
         # But when it's off there is no temperature reported, so we use this
-        self._attr_is_on = self.coordinator.data["sensors"]["temperature"] != 0
+        self._attr_is_on = self.coordinator.data["miner_sensors"]["temperature"] != 0
 
         super()._handle_coordinator_update()
