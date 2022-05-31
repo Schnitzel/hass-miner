@@ -2,6 +2,12 @@
 from unittest.mock import call
 from unittest.mock import patch
 
+from homeassistant.components.switch import SERVICE_TURN_OFF
+from homeassistant.components.switch import SERVICE_TURN_ON
+from homeassistant.const import ATTR_ENTITY_ID
+from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+from .const import MOCK_CONFIG
 from custom_components.miner import (
     async_setup_entry,
 )
@@ -14,12 +20,6 @@ from custom_components.miner.const import (
 from custom_components.miner.const import (
     SWITCH,
 )
-from homeassistant.components.switch import SERVICE_TURN_OFF
-from homeassistant.components.switch import SERVICE_TURN_ON
-from homeassistant.const import ATTR_ENTITY_ID
-from pytest_homeassistant_custom_component.common import MockConfigEntry
-
-from .const import MOCK_CONFIG
 
 
 async def test_switch_services(hass):
@@ -31,9 +31,7 @@ async def test_switch_services(hass):
 
     # Functions/objects can be patched directly in test code as well and can be used to test
     # additional things, like whether a function was called or what arguments it was called with
-    with patch(
-        "custom_components.miner.MinerApiClient.async_set_title"
-    ) as title_func:
+    with patch("custom_components.miner.MinerApiClient.async_set_title") as title_func:
         await hass.services.async_call(
             SWITCH,
             SERVICE_TURN_OFF,

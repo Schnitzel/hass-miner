@@ -1,25 +1,21 @@
 """IoTaWatt DataUpdateCoordinator."""
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+import ipaddress
 import logging
-
-from miners.miner_factory import MinerFactory
-from miners import BaseMiner
-
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers import httpx_client
-from homeassistant.helpers.debounce import Debouncer
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
-
-from .const import CONF_IP, CONF_HOSTNAME
+from datetime import timedelta
 
 from API import APIError
-import ipaddress
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.debounce import Debouncer
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+from homeassistant.helpers.update_coordinator import UpdateFailed
+from miners import BaseMiner
+from miners.miner_factory import MinerFactory
 
-from .parse_data import safe_parse_api_data
+from .const import CONF_HOSTNAME
+from .const import CONF_IP
 
 _LOGGER = logging.getLogger(__name__)
 

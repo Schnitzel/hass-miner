@@ -1,16 +1,17 @@
 """Config flow for Miner."""
-from homeassistant.helpers import config_entry_flow
-from homeassistant import config_entries, core, exceptions
-from .const import DOMAIN, CONF_IP, CONF_HOSTNAME
-
-from API import APIError
-
 import ipaddress
+import logging
 
 import voluptuous as vol
-
+from API import APIError
+from homeassistant import config_entries
+from homeassistant import core
+from homeassistant import exceptions
 from miners.miner_factory import MinerFactory
-import logging
+
+from .const import CONF_HOSTNAME
+from .const import CONF_IP
+from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -31,10 +32,9 @@ async def validate_input(
 
     miner_ip = ipaddress.ip_address(data.get(CONF_IP))
     miner_factory = MinerFactory()
-    miner_data = {}
     try:
         miner = await miner_factory.get_miner(miner_ip)
-        miner_data = await miner.get_data()
+        await miner.get_data()
     except APIError:
         return {"base": "cannot_connect"}
     except Exception:  # pylint: disable=broad-except

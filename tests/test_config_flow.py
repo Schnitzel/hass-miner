@@ -2,6 +2,11 @@
 from unittest.mock import patch
 
 import pytest
+from homeassistant import config_entries
+from homeassistant import data_entry_flow
+from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+from .const import MOCK_CONFIG
 from custom_components.miner.const import (
     BINARY_SENSOR,
 )
@@ -17,11 +22,6 @@ from custom_components.miner.const import (
 from custom_components.miner.const import (
     SWITCH,
 )
-from homeassistant import config_entries
-from homeassistant import data_entry_flow
-from pytest_homeassistant_custom_component.common import MockConfigEntry
-
-from .const import MOCK_CONFIG
 
 
 # This fixture bypasses the actual setup of the integration

@@ -10,16 +10,15 @@
 [![hacs][hacsbadge]][hacs]
 [![Project Maintenance][maintenance-shield]][user_profile]
 
-
 Controll your Braiins OS+ enabled Bitcoin miner from Home Assistant
 
 **This component will set up the following platforms.**
 
-| Platform        | Description                                                               |
-| --------------- | ------------------------------------------------------------------------- |
-| `sensor`        | Show info from miner API. |
-| `number`        | Set Power Limit of Miner. |
-| `switch`        | Switch Miner on and off                                   |
+| Platform | Description               |
+| -------- | ------------------------- |
+| `sensor` | Show info from miner API. |
+| `number` | Set Power Limit of Miner. |
+| `switch` | Switch Miner on and off   |
 
 ## Installation
 
@@ -28,7 +27,6 @@ Use HACS, add the custom repo https://github.com/Schnitzel/hass-miner to it
 Installation and usage:
 
 [![Installation and usage](http://img.youtube.com/vi/eL83eYLbgQM/0.jpg)](http://www.youtube.com/watch?v=eL83eYLbgQM)
-
 
 ## Contributions are welcome!
 

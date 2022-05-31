@@ -2,10 +2,11 @@
 import asyncio
 
 import aiohttp
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
+
 from custom_components.miner.api import (
     MinerApiClient,
 )
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 
 async def test_api(hass, aioclient_mock, caplog):

@@ -1,31 +1,18 @@
 """Support for IoTaWatt Energy monitor."""
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable
 from dataclasses import dataclass
-import logging
-from unittest import case
 
-from homeassistant.components import switch
-
-from homeassistant.components.sensor import (
-    SensorDeviceClass,
-    SensorEntity,
-    SensorEntityDescription,
-    SensorStateClass,
-)
-from homeassistant.components.switch import (
-    SwitchEntity,
-)
+from homeassistant.components.sensor import SensorEntityDescription
+from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers import entity, entity_registry
-from homeassistant.helpers.device_registry import CONNECTION_NETWORK_MAC
+from homeassistant.core import callback
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers import entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.restore_state import RestoreEntity
-from homeassistant.helpers.typing import StateType
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
-from homeassistant.util import dt
 
 from .const import (
     DOMAIN,
