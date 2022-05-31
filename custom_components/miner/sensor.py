@@ -245,7 +245,13 @@ class MinerBoardSensor(CoordinatorEntity[MinerCoordinator], SensorEntity):
     @property
     def _sensor_data(self):
         """Return sensor data."""
+        if (
+            self._board in self.coordinator.data["board_sensors"]
+            and self._sensor in self.coordinator.data["board_sensors"][self._board]
+        ):
         return self.coordinator.data["board_sensors"][self._board][self._sensor]
+        else:
+            return None
 
     @property
     def name(self) -> str | None:

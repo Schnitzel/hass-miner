@@ -87,7 +87,8 @@ class MinerCoordinator(DataUpdateCoordinator):
         chip_temps = [0]
         if temps:
             for temp_hashboard in temps:
-                data["board_sensors"][temp_hashboard["ID"]] = {}
+                if not temp_hashboard["ID"] in data["board_sensors"]:
+                    data["board_sensors"][temp_hashboard["ID"]] = {}
                 data["board_sensors"][temp_hashboard["ID"]][
                     "board_temperature"
                 ] = temp_hashboard["Board"]
@@ -122,6 +123,8 @@ class MinerCoordinator(DataUpdateCoordinator):
         devs = miner_api_data.get("devs")[0].get("DEVS")
         if devs:
             for hashboard in devs:
+                if not hashboard["ID"] in data["board_sensors"]:
+                    data["board_sensors"][hashboard["ID"]] = {}
                 data["board_sensors"][hashboard["ID"]]["board_hashrate"] = round(
                     hashboard["MHS 1m"] / 1000000, 2
                 )
