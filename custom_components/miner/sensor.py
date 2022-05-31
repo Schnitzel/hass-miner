@@ -138,36 +138,39 @@ async def async_setup_entry(
         )
 
     await coordinator.async_config_entry_first_refresh()
-    async_add_entities(
+    sensors = []
+    sensors.extend(
         _create_miner_entity(key) for key in coordinator.data["miner_sensors"]
     )
     if coordinator.data["board_sensors"]:
         for board in coordinator.data["board_sensors"]:
-            async_add_entities(
+            sensors.extend(
                 _create_board_entity(board, sensor)
                 for sensor in coordinator.data["board_sensors"][board]
             )
+    if sensors:
+        async_add_entities(sensors)
 
     @callback
     def new_data_received():
         """Check for new sensors."""
-        entities = [
+        sensors = []
+        sensors.extend(
             _create_miner_entity(key)
             for key in coordinator.data["miner_sensors"]
             if key not in sensor_created
-        ]
-        if entities:
-            async_add_entities(entities)
+        )
 
         if coordinator.data["board_sensors"]:
             for board in coordinator.data["board_sensors"]:
-                board_entities = [
+                sensors.extend(
                     _create_board_entity(board, sensor)
                     for sensor in coordinator.data["board_sensors"][board]
                     if f"{board}-{sensor}" not in sensor_created
-                ]
-                if board_entities:
-                    async_add_entities(board_entities)
+                )
+
+        if sensors:
+            async_add_entities(sensors)
 
     coordinator.async_add_listener(new_data_received)
 
@@ -249,7 +252,7 @@ class MinerBoardSensor(CoordinatorEntity[MinerCoordinator], SensorEntity):
             self._board in self.coordinator.data["board_sensors"]
             and self._sensor in self.coordinator.data["board_sensors"][self._board]
         ):
-        return self.coordinator.data["board_sensors"][self._board][self._sensor]
+            return self.coordinator.data["board_sensors"][self._board][self._sensor]
         else:
             return None
 
