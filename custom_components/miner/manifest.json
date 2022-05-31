@@ -1,6 +1,7 @@
 {
   "domain": "miner",
   "name": "Miner",
+  "issue_tracker": "https://github.com/Schnitzel/hass-miner/issues",
   "config_flow": true,
   "documentation": "https://www.home-assistant.io/integrations/miner",
   "requirements": ["minerinterface==0.5.2"],
