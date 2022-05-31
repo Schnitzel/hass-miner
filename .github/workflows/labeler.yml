@@ -9,6 +9,7 @@ on:
 jobs:
   labeler:
     name: Labeler
+    permissions: write-all
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repository
