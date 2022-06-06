@@ -26,7 +26,7 @@ Use HACS, add the custom repo https://github.com/Schnitzel/hass-miner to it
 
 Installation and usage:
 
-[![Installation and usage](http://img.youtube.com/vi/eL83eYLbgQM/0.jpg)](http://www.youtube.com/watch?v=eL83eYLbgQM)
+[![Installation and usage](http://img.youtube.com/vi/eL83eYLbgQM/0.jpg)](https://www.youtube.com/watch?v=6HwSQag7NU8)
 
 ## Contributions are welcome!
 
