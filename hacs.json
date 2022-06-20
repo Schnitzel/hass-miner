@@ -1,7 +1,7 @@
 {
   "name": "miner",
   "hacs": "1.6.0",
-  "domains": ["sensor", "switch"],
+  "domains": ["sensor", "switch", "number"],
   "iot_class": "local_polling",
   "homeassistant": "0.118.0"
 }
