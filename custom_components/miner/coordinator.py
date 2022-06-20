@@ -107,14 +107,16 @@ class MinerCoordinator(DataUpdateCoordinator):
                 else:
                     data["miner_sensors"]["miner_consumption"] = None
                 dynamic_power_scaling = tuner[0].get("DynamicPowerScaling")
-                if dynamic_power_scaling == "InitialPowerLimit":
-                    data["miner_sensors"]["scaled_power_limit"] = power_limit
-                else:
+                if isinstance(dynamic_power_scaling, dict):
                     scaled_power_limit = dynamic_power_scaling.get("ScaledPowerLimit")
                     if scaled_power_limit:
                         data["miner_sensors"]["scaled_power_limit"] = scaled_power_limit
                     else:
                         data["miner_sensors"]["scaled_power_limit"] = None
+                elif dynamic_power_scaling == "InitialPowerLimit":
+                    data["miner_sensors"]["scaled_power_limit"] = power_limit
+                else:
+                    data["miner_sensors"]["scaled_power_limit"] = None
 
         devs = miner_api_data.get("devs")[0].get("DEVS")
         if devs:
