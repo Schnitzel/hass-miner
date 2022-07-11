@@ -12,7 +12,7 @@
 
 Controll your Braiins OS+ enabled Bitcoin miner from Home Assistant.
 
-Uses a [forked](https://github.com/Schnitzel/minerInterface) version of the awesome [minerInterface](https://github.com/UpstreamData/minerInterface) by [UpstreamData](https://github.com/UpstreamData) to talk to the APIs of the miners
+Uses [pyasic](https://github.com/UpstreamData/pyasic) by [UpstreamData](https://github.com/UpstreamData) to talk to the APIs of the miners.
 
 **This component will set up the following platforms.**
 

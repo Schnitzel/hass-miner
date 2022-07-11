@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import logging
 
-import yaml
 from homeassistant.components.number import NumberEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import callback
@@ -92,10 +91,9 @@ class MinerPowerLimitNumber(CoordinatorEntity[MinerCoordinator], NumberEntity):
 
         miner = self.coordinator.miner
         await miner.get_config()
-        updated_config = yaml.load(miner.config, Loader=yaml.SafeLoader)
-        updated_config["autotuning"]["wattage"] = int(value)
-        config_yaml = yaml.dump(updated_config, sort_keys=False)
-        await miner.send_config(config_yaml)
+        updated_config = miner.config
+        updated_config.autotuning_wattage = int(value)
+        await miner.send_config(updated_config.as_yaml())
 
         self._attr_value = value
         self.async_write_ha_state()

@@ -1,13 +1,12 @@
 """Config flow for Miner."""
-import ipaddress
 import logging
 
 import voluptuous as vol
-from API import APIError
 from homeassistant import config_entries
 from homeassistant import core
 from homeassistant import exceptions
-from miners.miner_factory import MinerFactory
+from pyasic.API import APIError
+from pyasic.miners.miner_factory import MinerFactory
 
 from .const import CONF_HOSTNAME
 from .const import CONF_IP
@@ -30,11 +29,10 @@ async def validate_input(
 ) -> dict[str, str]:
     """Validate the user input allows us to connect."""
 
-    miner_ip = ipaddress.ip_address(data.get(CONF_IP))
-    miner_factory = MinerFactory()
+    miner_ip = data.get(CONF_IP)
     try:
-        miner = await miner_factory.get_miner(miner_ip)
-        await miner.get_data()
+        miner = await MinerFactory().get_miner(miner_ip)
+        await miner.api.summary()
     except APIError:
         return {"base": "cannot_connect"}
     except Exception:  # pylint: disable=broad-except
@@ -75,9 +73,8 @@ class MinerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_hostname(self, user_input=None):
         """Ask for Hostname if we can't load it automated"""
 
-        miner_ip = ipaddress.ip_address(self._data.get(CONF_IP))
-        miner_factory = MinerFactory()
-        miner = await miner_factory.get_miner(miner_ip)
+        miner_ip = self._data.get(CONF_IP)
+        miner = await MinerFactory().get_miner(miner_ip)
         miner_data = await miner.get_data()
 
         if user_input is None:
@@ -87,7 +84,7 @@ class MinerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             {
                 vol.Required(
                     CONF_HOSTNAME,
-                    default=user_input.get(CONF_HOSTNAME, miner_data["Hostname"]),
+                    default=user_input.get(CONF_HOSTNAME, miner_data.hostname),
                 ): str,
             }
         )

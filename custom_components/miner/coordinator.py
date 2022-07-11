@@ -1,18 +1,17 @@
 """IoTaWatt DataUpdateCoordinator."""
 from __future__ import annotations
 
-import ipaddress
 import logging
 from datetime import timedelta
 
-from API import APIError
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.debounce import Debouncer
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.helpers.update_coordinator import UpdateFailed
-from miners import BaseMiner
-from miners.miner_factory import MinerFactory
+from pyasic.API import APIError
+from pyasic.miners import BaseMiner
+from pyasic.miners.miner_factory import MinerFactory
 
 from .const import CONF_HOSTNAME
 from .const import CONF_IP
@@ -26,15 +25,11 @@ REQUEST_REFRESH_DEFAULT_COOLDOWN = 5
 class MinerCoordinator(DataUpdateCoordinator):
     """Class to manage fetching update data from the IoTaWatt Energy Device."""
 
-    miner_factory: MinerFactory | None = None
     miner: BaseMiner | None = None
 
-    def __init__(
-        self, hass: HomeAssistant, entry: ConfigEntry, miner_factory: MinerFactory
-    ) -> None:
+    def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
         """Initialize MinerCoordinator object."""
         self.entry = entry
-        self.miner_factory = miner_factory
         super().__init__(
             hass=hass,
             logger=_LOGGER,
@@ -51,80 +46,61 @@ class MinerCoordinator(DataUpdateCoordinator):
     async def _async_update_data(self):
         """Fetch sensors from miners."""
 
-        miner_ip = ipaddress.ip_address(self.entry.data[CONF_IP])
-        miner_api_data = {}
-        model = {}
+        miner_ip = self.entry.data[CONF_IP]
 
         try:
             if self.miner is None:
-                self.miner = await self.miner_factory.get_miner(miner_ip)
-            miner_api_data = await self.miner.api.multicommand(
-                "summary", "temps", "tunerstatus", "devs", "fans"
-            )
-            model = await self.miner.get_model()
+                self.miner = await MinerFactory().get_miner(miner_ip)
+            miner_data = await self.miner.get_data()
 
         except APIError as err:
             raise UpdateFailed("API Error") from err
 
         data = {}
-        data["hostname"] = self.entry.data[CONF_HOSTNAME]
-        data["model"] = model
+        # data["hostname"] = self.entry.data[CONF_HOSTNAME]
+        data["hostname"] = miner_data.hostname
+        data["model"] = miner_data.model
         data["ip"] = self.miner.ip
-        # data["version"] = miner_version
-        data["miner_sensors"] = {}
+        # data["version"] = miner_data.version
+        data["miner_sensors"] = {
+            "hashrate": int(miner_data.hashrate),
+            "temperature": int(miner_data.temperature_avg),
+            "power_limit": miner_data.wattage_limit,
+            "miner_consumption": miner_data.wattage,
+            "scaled_power_limit": None,
+        }
 
-        summary = miner_api_data.get("summary")[0].get("SUMMARY")
-        hashrate = summary[0].get("MHS 1m")
-        if hashrate:
-            data["miner_sensors"]["hashrate"] = round(hashrate / 1000000, 2)
+        data["board_sensors"] = {
+            0: {
+                "board_temperature": miner_data.left_board_temp,
+                "chip_temperature": miner_data.left_board_chip_temp,
+                "board_hashrate": miner_data.left_board_hashrate,
+            },
+            1: {
+                "board_temperature": miner_data.center_board_temp,
+                "chip_temperature": miner_data.center_board_chip_temp,
+                "board_hashrate": miner_data.center_board_hashrate,
+            },
+            2: {
+                "board_temperature": miner_data.right_board_temp,
+                "chip_temperature": miner_data.right_board_chip_temp,
+                "board_hashrate": miner_data.right_board_hashrate,
+            },
+        }
 
-        temps = miner_api_data.get("temps")[0].get("TEMPS")
-        data["board_sensors"] = {}
-        chip_temps = [0]
-        if temps:
-            for temp_hashboard in temps:
-                if not temp_hashboard["ID"] in data["board_sensors"]:
-                    data["board_sensors"][temp_hashboard["ID"]] = {}
-                data["board_sensors"][temp_hashboard["ID"]][
-                    "board_temperature"
-                ] = temp_hashboard["Board"]
-                data["board_sensors"][temp_hashboard["ID"]][
-                    "chip_temperature"
-                ] = temp_hashboard["Chip"]
-                chip_temps.append(temp_hashboard["Chip"])
-
-        data["miner_sensors"]["temperature"] = max(chip_temps)
+        miner_api_data = await self.miner.api.multicommand("tunerstatus")
 
         tuner = miner_api_data.get("tunerstatus")[0].get("TUNERSTATUS")
         if tuner:
             if len(tuner) > 0:
-                power_limit = tuner[0].get("PowerLimit")
-                if power_limit:
-                    data["miner_sensors"]["power_limit"] = power_limit
-                miner_consumption = tuner[0].get("ApproximateMinerPowerConsumption")
-                if miner_consumption:
-                    data["miner_sensors"]["miner_consumption"] = miner_consumption
-                else:
-                    data["miner_sensors"]["miner_consumption"] = None
                 dynamic_power_scaling = tuner[0].get("DynamicPowerScaling")
                 if isinstance(dynamic_power_scaling, dict):
                     scaled_power_limit = dynamic_power_scaling.get("ScaledPowerLimit")
                     if scaled_power_limit:
                         data["miner_sensors"]["scaled_power_limit"] = scaled_power_limit
-                    else:
-                        data["miner_sensors"]["scaled_power_limit"] = None
                 elif dynamic_power_scaling == "InitialPowerLimit":
-                    data["miner_sensors"]["scaled_power_limit"] = power_limit
-                else:
-                    data["miner_sensors"]["scaled_power_limit"] = None
-
-        devs = miner_api_data.get("devs")[0].get("DEVS")
-        if devs:
-            for hashboard in devs:
-                if not hashboard["ID"] in data["board_sensors"]:
-                    data["board_sensors"][hashboard["ID"]] = {}
-                data["board_sensors"][hashboard["ID"]]["board_hashrate"] = round(
-                    hashboard["MHS 1m"] / 1000000, 2
-                )
+                    data["miner_sensors"][
+                        "scaled_power_limit"
+                    ] = miner_api_data.wattage_limit
 
         return data
