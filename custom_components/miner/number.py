@@ -11,6 +11,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from pyasic.config import MinerConfig
 
 from .const import (
     DOMAIN,
@@ -92,10 +93,9 @@ class MinerPowerLimitNumber(CoordinatorEntity[MinerCoordinator], NumberEntity):
 
         miner = self.coordinator.miner
         await miner.get_config()
-        updated_config = yaml.load(miner.config, Loader=yaml.SafeLoader)
-        updated_config["autotuning"]["wattage"] = int(value)
-        config_yaml = yaml.dump(updated_config, sort_keys=False)
-        await miner.send_config(config_yaml)
+        updated_config = miner.config
+        updated_config.autotuning_wattage = int(value)
+        await miner.send_config(updated_config.as_yaml())
 
         self._attr_value = value
         self.async_write_ha_state()
