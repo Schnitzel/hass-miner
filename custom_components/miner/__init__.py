@@ -4,7 +4,7 @@ from __future__ import annotations
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
-from miners.miner_factory import MinerFactory
+from pyasic.miners.miner_factory import MinerFactory
 
 from .const import DOMAIN
 from .coordinator import MinerCoordinator
@@ -17,8 +17,7 @@ PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.SWITCH, Platform.NUMBER]
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Miner from a config entry."""
 
-    miner_factory = MinerFactory()
-    coordinator = MinerCoordinator(hass, entry, miner_factory)
+    coordinator = MinerCoordinator(hass, entry)
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
 
     hass.config_entries.async_setup_platforms(entry, PLATFORMS)

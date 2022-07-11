@@ -1,2 +1,2 @@
 homeassistant
-minerinterface==0.5.3
+pyasic
