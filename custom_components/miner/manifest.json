@@ -4,11 +4,10 @@
   "issue_tracker": "https://github.com/Schnitzel/hass-miner/issues",
   "config_flow": true,
   "documentation": "https://github.com/Schnitzel/hass-miner",
-  "requirements": ["minerinterface==0.5.2"],
+  "requirements": ["pyasic==0.19.1"],
   "ssdp": [],
   "zeroconf": [],
   "homekit": {},
-  "dependencies": [],
   "codeowners": ["@Schnitzel"],
   "iot_class": "local_polling",
   "version": "0.6.0"
