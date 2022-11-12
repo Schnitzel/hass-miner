@@ -10,7 +10,7 @@
 [![hacs][hacsbadge]][hacs]
 [![Project Maintenance][maintenance-shield]][user_profile]
 
-Controll your Braiins OS+ enabled Bitcoin miner from Home Assistant.
+Control your Braiins OS+ enabled Bitcoin miner from Home Assistant.
 
 Uses [pyasic](https://github.com/UpstreamData/pyasic) by [UpstreamData](https://github.com/UpstreamData) to talk to the APIs of the miners.
 

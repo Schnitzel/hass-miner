@@ -13,7 +13,6 @@ from pyasic.API import APIError
 from pyasic.miners import BaseMiner
 from pyasic.miners.miner_factory import MinerFactory
 
-from .const import CONF_HOSTNAME
 from .const import CONF_IP
 
 _LOGGER = logging.getLogger(__name__)
@@ -71,21 +70,12 @@ class MinerCoordinator(DataUpdateCoordinator):
         }
 
         data["board_sensors"] = {
-            0: {
-                "board_temperature": miner_data.left_board_temp,
-                "chip_temperature": miner_data.left_board_chip_temp,
-                "board_hashrate": miner_data.left_board_hashrate,
-            },
-            1: {
-                "board_temperature": miner_data.center_board_temp,
-                "chip_temperature": miner_data.center_board_chip_temp,
-                "board_hashrate": miner_data.center_board_hashrate,
-            },
-            2: {
-                "board_temperature": miner_data.right_board_temp,
-                "chip_temperature": miner_data.right_board_chip_temp,
-                "board_hashrate": miner_data.right_board_hashrate,
-            },
+            board.slot: {
+                "board_temperature": board.temp,
+                "chip_temperature": board.chip_temp,
+                "board_hashrate": board.hashrate,
+            }
+            for board in miner_data.hashboards
         }
 
         miner_api_data = await self.miner.api.multicommand("tunerstatus")

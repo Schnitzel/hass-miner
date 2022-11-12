@@ -75,7 +75,7 @@ class MinerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         miner_ip = self._data.get(CONF_IP)
         miner = await MinerFactory().get_miner(miner_ip)
-        miner_data = await miner.get_data()
+        hn = await miner.get_hostname()
 
         if user_input is None:
             user_input = {}
@@ -84,7 +84,7 @@ class MinerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             {
                 vol.Required(
                     CONF_HOSTNAME,
-                    default=user_input.get(CONF_HOSTNAME, miner_data.hostname),
+                    default=user_input.get(CONF_HOSTNAME, hn),
                 ): str,
             }
         )
