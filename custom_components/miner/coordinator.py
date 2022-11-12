@@ -78,19 +78,24 @@ class MinerCoordinator(DataUpdateCoordinator):
             for board in miner_data.hashboards
         }
 
-        miner_api_data = await self.miner.api.multicommand("tunerstatus")
+        if "tunerstatus" in self.miner.api.get_commands():
+            miner_api_data = await self.miner.api.tunerstatus()
 
-        tuner = miner_api_data.get("tunerstatus")[0].get("TUNERSTATUS")
-        if tuner:
-            if len(tuner) > 0:
-                dynamic_power_scaling = tuner[0].get("DynamicPowerScaling")
-                if isinstance(dynamic_power_scaling, dict):
-                    scaled_power_limit = dynamic_power_scaling.get("ScaledPowerLimit")
-                    if scaled_power_limit:
-                        data["miner_sensors"]["scaled_power_limit"] = scaled_power_limit
-                elif dynamic_power_scaling == "InitialPowerLimit":
-                    data["miner_sensors"][
-                        "scaled_power_limit"
-                    ] = miner_api_data.wattage_limit
+            tuner = miner_api_data.get("TUNERSTATUS")
+            if tuner:
+                if len(tuner) > 0:
+                    dynamic_power_scaling = tuner[0].get("DynamicPowerScaling")
+                    if isinstance(dynamic_power_scaling, dict):
+                        scaled_power_limit = dynamic_power_scaling.get(
+                            "ScaledPowerLimit"
+                        )
+                        if scaled_power_limit:
+                            data["miner_sensors"][
+                                "scaled_power_limit"
+                            ] = scaled_power_limit
+                    elif dynamic_power_scaling == "InitialPowerLimit":
+                        data["miner_sensors"][
+                            "scaled_power_limit"
+                        ] = miner_api_data.wattage_limit
 
         return data
