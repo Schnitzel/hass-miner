@@ -79,9 +79,9 @@ class MinerCoordinator(DataUpdateCoordinator):
         }
 
         if "tunerstatus" in self.miner.api.get_commands():
-            miner_api_data = await self.miner.api.tunerstatus()
+            tuner_data = await self.miner.api.tunerstatus()
 
-            tuner = miner_api_data.get("TUNERSTATUS")
+            tuner = tuner_data.get("TUNERSTATUS")
             if tuner:
                 if len(tuner) > 0:
                     dynamic_power_scaling = tuner[0].get("DynamicPowerScaling")
@@ -96,6 +96,6 @@ class MinerCoordinator(DataUpdateCoordinator):
                     elif dynamic_power_scaling == "InitialPowerLimit":
                         data["miner_sensors"][
                             "scaled_power_limit"
-                        ] = miner_api_data.wattage_limit
+                        ] = miner_data.wattage_limit
 
         return data
