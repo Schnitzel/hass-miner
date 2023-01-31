@@ -24,7 +24,7 @@ Uses [pyasic](https://github.com/UpstreamData/pyasic) by [UpstreamData](https://
 
 ## Installation
 
-Use HACS, add the custom repo https://github.com/Schnitzel/hass-miner to it
+Use HACS, add the custom repo https://github.com/UpstreamData/hass-miner to it
 
 Installation and usage:
 
@@ -45,10 +45,10 @@ Code template was mainly taken from [@Ludeeus](https://github.com/ludeeus)'s [in
 [integration_blueprint]: https://github.com/custom-components/integration_blueprint
 [black]: https://github.com/psf/black
 [black-shield]: https://img.shields.io/badge/code%20style-black-000000.svg?style=for-the-badge
-[buymecoffee]: https://www.buymeacoffee.com/Schnitzel
+[buymecoffee]: https://www.buymeacoffee.com/UpstreamData
 [buymecoffeebadge]: https://img.shields.io/badge/buy%20me%20a%20coffee-donate-yellow.svg?style=for-the-badge
-[commits-shield]: https://img.shields.io/github/commit-activity/y/Schnitzel/hass-miner.svg?style=for-the-badge
-[commits]: https://github.com/Schnitzel/hass-miner/commits/main
+[commits-shield]: https://img.shields.io/github/commit-activity/y/UpstreamData/hass-miner.svg?style=for-the-badge
+[commits]: https://github.com/UpstreamData/hass-miner/commits/main
 [hacs]: https://hacs.xyz
 [hacsbadge]: https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge
 [discord]: https://discord.gg/Qa5fW2R
@@ -56,10 +56,10 @@ Code template was mainly taken from [@Ludeeus](https://github.com/ludeeus)'s [in
 [exampleimg]: example.png
 [forum-shield]: https://img.shields.io/badge/community-forum-brightgreen.svg?style=for-the-badge
 [forum]: https://community.home-assistant.io/
-[license-shield]: https://img.shields.io/github/license/Schnitzel/hass-miner.svg?style=for-the-badge
-[maintenance-shield]: https://img.shields.io/badge/maintainer-%40Schnitzel-blue.svg?style=for-the-badge
+[license-shield]: https://img.shields.io/github/license/UpstreamData/hass-miner.svg?style=for-the-badge
+[maintenance-shield]: https://img.shields.io/badge/maintainer-%40UpstreamData-blue.svg?style=for-the-badge
 [pre-commit]: https://github.com/pre-commit/pre-commit
 [pre-commit-shield]: https://img.shields.io/badge/pre--commit-enabled-brightgreen?style=for-the-badge
-[releases-shield]: https://img.shields.io/github/release/Schnitzel/hass-miner.svg?style=for-the-badge
-[releases]: https://github.com/Schnitzel/hass-miner/releases
-[user_profile]: https://github.com/Schnitzel
+[releases-shield]: https://img.shields.io/github/release/UpstreamData/hass-miner.svg?style=for-the-badge
+[releases]: https://github.com/UpstreamData/hass-miner/releases
+[user_profile]: https://github.com/UpstreamData
