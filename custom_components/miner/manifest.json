@@ -4,7 +4,7 @@
   "issue_tracker": "https://github.com/Schnitzel/hass-miner/issues",
   "config_flow": true,
   "documentation": "https://github.com/Schnitzel/hass-miner",
-  "requirements": ["pyasic==0.21.10"],
+  "requirements": ["pyasic==0.26.2"],
   "ssdp": [],
   "zeroconf": [],
   "homekit": {},
