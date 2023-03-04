@@ -1,11 +1,11 @@
 """Config flow for Miner."""
 import logging
 
+import pyasic.miners.unknown
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant import core
 from homeassistant import exceptions
-from pyasic.API import APIError
 from pyasic.miners.miner_factory import MinerFactory
 
 from .const import CONF_HOSTNAME
@@ -32,9 +32,8 @@ async def validate_input(
     miner_ip = data.get(CONF_IP)
     try:
         miner = await MinerFactory().get_miner(miner_ip)
-        await miner.api.summary()
-    except APIError:
-        return {"base": "cannot_connect"}
+        if isinstance(miner, pyasic.miners.unknown.UnknownMiner):
+            return {"base": "cannot_connect"}
     except Exception:  # pylint: disable=broad-except
         _LOGGER.exception("Unexpected exception")
         return {"base": "unknown"}

@@ -55,28 +55,30 @@ class MinerCoordinator(DataUpdateCoordinator):
         except APIError as err:
             raise UpdateFailed("API Error") from err
 
-        data = {}
+        data = {
+            "hostname": miner_data.hostname,
+            "mac": miner_data.mac,
+            "make": miner_data.make,
+            "model": miner_data.model,
+            "ip": self.miner.ip,
+            "miner_sensors": {
+                "hashrate": int(miner_data.hashrate),
+                "temperature": int(miner_data.temperature_avg),
+                "power_limit": miner_data.wattage_limit,
+                "miner_consumption": miner_data.wattage,
+                "scaled_power_limit": None,
+            },
+            "board_sensors": {
+                board.slot: {
+                    "board_temperature": board.temp,
+                    "chip_temperature": board.chip_temp,
+                    "board_hashrate": board.hashrate,
+                }
+                for board in miner_data.hashboards
+            },
+        }
         # data["hostname"] = self.entry.data[CONF_HOSTNAME]
-        data["hostname"] = miner_data.hostname
-        data["model"] = miner_data.model
-        data["ip"] = self.miner.ip
         # data["version"] = miner_data.version
-        data["miner_sensors"] = {
-            "hashrate": int(miner_data.hashrate),
-            "temperature": int(miner_data.temperature_avg),
-            "power_limit": miner_data.wattage_limit,
-            "miner_consumption": miner_data.wattage,
-            "scaled_power_limit": None,
-        }
-
-        data["board_sensors"] = {
-            board.slot: {
-                "board_temperature": board.temp,
-                "chip_temperature": board.chip_temp,
-                "board_hashrate": board.hashrate,
-            }
-            for board in miner_data.hashboards
-        }
 
         if "tunerstatus" in self.miner.api.get_commands():
             tuner_data = await self.miner.api.tunerstatus()

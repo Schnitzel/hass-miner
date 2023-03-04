@@ -85,10 +85,10 @@ class MinerActiveSwitch(CoordinatorEntity[MinerCoordinator], SwitchEntity):
     def device_info(self) -> entity.DeviceInfo:
         """Return device info."""
         return entity.DeviceInfo(
-            identifiers={(DOMAIN, self.coordinator.data["hostname"])},
-            manufacturer="Antminer",
+            identifiers={(DOMAIN, self.coordinator.data["mac"])},
+            manufacturer=self.coordinator.data["make"],
             model=self.coordinator.data["model"],
-            name=f"Antminer {self.coordinator.data['model']}",
+            name=f"{self.coordinator.data['make']} {self.coordinator.data['model']}",
         )
 
     async def async_turn_on(self) -> None:
