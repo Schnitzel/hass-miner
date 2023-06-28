@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import logging
 
+import pyasic
 from homeassistant.components.number import NumberEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import callback
@@ -91,10 +92,12 @@ class MinerPowerLimitNumber(CoordinatorEntity[MinerCoordinator], NumberEntity):
         """Update the current value."""
 
         miner = self.coordinator.miner
-        await miner.get_config()
-        updated_config = miner.config
-        updated_config.autotuning_wattage = int(value)
-        await miner.send_config(updated_config.as_yaml())
+        if not miner.autotuning_enabled:
+            raise TypeError("This miner does not support setting power limit.")
+
+        result = await miner.set_power_limit(int(value))
+        if not result:
+            raise pyasic.APIError("Failed to set wattage.")
 
         self._attr_value = value
         self.async_write_ha_state()
