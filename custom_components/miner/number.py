@@ -54,6 +54,7 @@ async def async_setup_entry(
     # coordinator.async_add_listener(new_data_received)
 
 
+# TODO: This needs an update.  Lots of weird lint errors here.
 class MinerPowerLimitNumber(CoordinatorEntity[MinerCoordinator], NumberEntity):
     """Defines a Miner Number to set the Power Limit of the Miner"""
 

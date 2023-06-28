@@ -1,12 +1,11 @@
 """Config flow for Miner."""
 import logging
 
-import pyasic.miners.unknown
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant import core
 from homeassistant import exceptions
-from pyasic.miners.miner_factory import MinerFactory
+import pyasic
 
 from .const import CONF_HOSTNAME
 from .const import CONF_IP
@@ -25,14 +24,14 @@ _LOGGER = logging.getLogger(__name__)
 
 
 async def validate_input(
-    hass: core.HomeAssistant, data: dict[str, str]
+    data: dict[str, str]
 ) -> dict[str, str]:
     """Validate the user input allows us to connect."""
-
     miner_ip = data.get(CONF_IP)
+
     try:
-        miner = await MinerFactory().get_miner(miner_ip)
-        if isinstance(miner, pyasic.miners.unknown.UnknownMiner):
+        miner = await pyasic.get_miner(miner_ip)
+        if miner is None:
             return {"base": "cannot_connect"}
     except Exception:  # pylint: disable=broad-except
         _LOGGER.exception("Unexpected exception")
@@ -63,7 +62,7 @@ class MinerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if not user_input:
             return self.async_show_form(step_id="user", data_schema=schema)
 
-        if not (errors := await validate_input(self.hass, user_input)):
+        if not (errors := await validate_input(user_input)):
             self._data.update(user_input)
             return await self.async_step_hostname()
 
@@ -73,8 +72,8 @@ class MinerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Ask for Hostname if we can't load it automated"""
 
         miner_ip = self._data.get(CONF_IP)
-        miner = await MinerFactory().get_miner(miner_ip)
-        hn = await miner.get_hostname()
+        miner = await pyasic.get_miner(miner_ip) # should be fast, cached
+        hn = await miner.get_hostname() # TODO: this should be replaced with something, MAC maybe?  Hostname can be duplicates (mostly on stock).
 
         if user_input is None:
             user_input = {}
@@ -91,11 +90,6 @@ class MinerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             return self.async_show_form(step_id="hostname", data_schema=data_schema)
 
         data = {**self._data, **user_input}
-
-        # if errors := await validate_input(self.hass, data):
-        #     return self.async_show_form(
-        #         step_id="hostname", data_schema=data_schema, errors=errors
-        #     )
 
         return self.async_create_entry(title=data[CONF_HOSTNAME], data=data)
 

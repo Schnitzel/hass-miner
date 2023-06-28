@@ -67,6 +67,12 @@ ENTITY_DESCRIPTION_KEY_MAP: dict[
         state_class=SensorStateClass.MEASUREMENT,
         device_class="Hashrate",
     ),
+    "ideal_hashrate": MinerSensorEntityDescription(
+        "Hashrate",
+        native_unit_of_measurement="TH/s",
+        state_class=SensorStateClass.MEASUREMENT,
+        device_class="Hashrate",
+    ),
     "board_hashrate": MinerSensorEntityDescription(
         "Board Hashrate",
         native_unit_of_measurement="TH/s",
@@ -81,12 +87,6 @@ ENTITY_DESCRIPTION_KEY_MAP: dict[
     ),
     "miner_consumption": MinerSensorEntityDescription(
         "Miner Consumption",
-        state_class=SensorStateClass.MEASUREMENT,
-        native_unit_of_measurement=POWER_WATT,
-        device_class=SensorDeviceClass.POWER,
-    ),
-    "scaled_power_limit": MinerSensorEntityDescription(
-        "Scaled Power Limit",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=POWER_WATT,
         device_class=SensorDeviceClass.POWER,

@@ -1,17 +1,14 @@
 """IoTaWatt DataUpdateCoordinator."""
-from __future__ import annotations
-
 import logging
 from datetime import timedelta
+from typing import Union
 
+import pyasic
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.debounce import Debouncer
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.helpers.update_coordinator import UpdateFailed
-from pyasic.API import APIError
-from pyasic.miners import BaseMiner
-from pyasic.miners.miner_factory import MinerFactory
 
 from .const import CONF_IP
 
@@ -24,7 +21,7 @@ REQUEST_REFRESH_DEFAULT_COOLDOWN = 5
 class MinerCoordinator(DataUpdateCoordinator):
     """Class to manage fetching update data from the IoTaWatt Energy Device."""
 
-    miner: BaseMiner | None = None
+    miner: Union[pyasic.AnyMiner, None] = None
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
         """Initialize MinerCoordinator object."""
@@ -32,7 +29,7 @@ class MinerCoordinator(DataUpdateCoordinator):
         super().__init__(
             hass=hass,
             logger=_LOGGER,
-            name=entry.title,
+            name=entry.title, # hostname for now
             update_interval=timedelta(seconds=10),
             request_refresh_debouncer=Debouncer(
                 hass,
@@ -49,10 +46,10 @@ class MinerCoordinator(DataUpdateCoordinator):
 
         try:
             if self.miner is None:
-                self.miner = await MinerFactory().get_miner(miner_ip)
+                self.miner = await pyasic.get_miner(miner_ip)
             miner_data = await self.miner.get_data()
 
-        except APIError as err:
+        except pyasic.APIError as err:
             raise UpdateFailed("API Error") from err
 
         data = {
@@ -63,10 +60,10 @@ class MinerCoordinator(DataUpdateCoordinator):
             "ip": self.miner.ip,
             "miner_sensors": {
                 "hashrate": int(miner_data.hashrate),
+                "ideal_hashrate": int(miner_data.nominal_hashrate),
                 "temperature": int(miner_data.temperature_avg),
                 "power_limit": miner_data.wattage_limit,
                 "miner_consumption": miner_data.wattage,
-                "scaled_power_limit": None,
             },
             "board_sensors": {
                 board.slot: {
@@ -77,27 +74,5 @@ class MinerCoordinator(DataUpdateCoordinator):
                 for board in miner_data.hashboards
             },
         }
-        # data["hostname"] = self.entry.data[CONF_HOSTNAME]
-        # data["version"] = miner_data.version
-
-        if "tunerstatus" in self.miner.api.get_commands():
-            tuner_data = await self.miner.api.tunerstatus()
-
-            tuner = tuner_data.get("TUNERSTATUS")
-            if tuner:
-                if len(tuner) > 0:
-                    dynamic_power_scaling = tuner[0].get("DynamicPowerScaling")
-                    if isinstance(dynamic_power_scaling, dict):
-                        scaled_power_limit = dynamic_power_scaling.get(
-                            "ScaledPowerLimit"
-                        )
-                        if scaled_power_limit:
-                            data["miner_sensors"][
-                                "scaled_power_limit"
-                            ] = scaled_power_limit
-                    elif dynamic_power_scaling == "InitialPowerLimit":
-                        data["miner_sensors"][
-                            "scaled_power_limit"
-                        ] = miner_data.wattage_limit
 
         return data
