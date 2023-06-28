@@ -4,6 +4,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Callable
 from dataclasses import dataclass
+from typing import Union
 
 from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.components.sensor import SensorEntity
@@ -31,13 +32,13 @@ _LOGGER = logging.getLogger(__name__)
 class MinerSensorEntityDescription(SensorEntityDescription):
     """Class describing IotaWatt sensor entities."""
 
-    value: Callable | None = None
+    value: Union[Callable, None] = None
 
 
 class MinerNumberEntityDescription(SensorEntityDescription):
     """Class describing IotaWatt number entities."""
 
-    value: Callable | None = None
+    value: Union[Callable, None] = None
 
 
 ENTITY_DESCRIPTION_KEY_MAP: dict[
@@ -68,7 +69,7 @@ ENTITY_DESCRIPTION_KEY_MAP: dict[
         device_class="Hashrate",
     ),
     "ideal_hashrate": MinerSensorEntityDescription(
-        "Hashrate",
+        "Ideal Hashrate",
         native_unit_of_measurement="TH/s",
         state_class=SensorStateClass.MEASUREMENT,
         device_class="Hashrate",

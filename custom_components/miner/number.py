@@ -29,7 +29,7 @@ async def async_setup_entry(
     created = set()
 
     @callback
-    def _create_entity(key: str) -> NumberEntity:
+    def _create_entity(key: str):
         """Create a sensor entity."""
         created.add(key)
 

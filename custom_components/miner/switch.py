@@ -4,6 +4,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Callable
 from dataclasses import dataclass
+from typing import Union
 
 from homeassistant.components.sensor import SensorEntityDescription
 from homeassistant.components.switch import SwitchEntity
@@ -26,7 +27,7 @@ _LOGGER = logging.getLogger(__name__)
 class MinerSensorEntityDescription(SensorEntityDescription):
     """Class describing IotaWatt sensor entities."""
 
-    value: Callable | None = None
+    value: Union[Callable, None] = None
 
 
 async def async_setup_entry(

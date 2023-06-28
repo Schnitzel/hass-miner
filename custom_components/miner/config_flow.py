@@ -1,11 +1,10 @@
 """Config flow for Miner."""
 import logging
 
+import pyasic
 import voluptuous as vol
 from homeassistant import config_entries
-from homeassistant import core
 from homeassistant import exceptions
-import pyasic
 
 from .const import CONF_HOSTNAME
 from .const import CONF_IP
@@ -62,7 +61,9 @@ class MinerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if not user_input:
             return self.async_show_form(step_id="user", data_schema=schema)
 
-        if not (errors := await validate_input(user_input)):
+        errors = await validate_input(user_input)
+
+        if not errors:
             self._data.update(user_input)
             return await self.async_step_hostname()
 
