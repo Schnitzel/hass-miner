@@ -95,7 +95,7 @@ class MinerActiveSwitch(CoordinatorEntity[MinerCoordinator], SwitchEntity):
     async def async_turn_on(self) -> None:
         """Turn on miner."""
         miner = self.coordinator.miner
-        if not miner.supports_autotuning:
+        if not miner.supports_shutdown:
             raise TypeError(f"{miner} does not support shutdown mode.")
         self._attr_is_on = True
         await miner.resume_mining()
@@ -104,7 +104,7 @@ class MinerActiveSwitch(CoordinatorEntity[MinerCoordinator], SwitchEntity):
     async def async_turn_off(self) -> None:
         """Turn off miner."""
         miner = self.coordinator.miner
-        if not miner.supports_autotuning:
+        if not miner.supports_shutdown:
             raise TypeError(f"{miner} does not support shutdown mode.")
         self._attr_is_on = False
         await miner.stop_mining()
