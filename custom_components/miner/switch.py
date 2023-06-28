@@ -112,9 +112,8 @@ class MinerActiveSwitch(CoordinatorEntity[MinerCoordinator], SwitchEntity):
 
     @callback
     def _handle_coordinator_update(self) -> None:
-
-        # There isn't really a good way to check if the Miner is on.
-        # But when it's off there is no temperature reported, so we use this
-        self._attr_is_on = self.coordinator.data["miner_sensors"]["is_mining"]
+        is_mining = await self.coordinator.miner.is_mining()
+        if is_mining is not None:
+            self._attr_is_on = is_mining
 
         super()._handle_coordinator_update()
