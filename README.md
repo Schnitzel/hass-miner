@@ -1,4 +1,4 @@
-# miner
+# hass-miner
 
 [![GitHub Release][releases-shield]][releases]
 [![GitHub Activity][commits-shield]][commits]
@@ -10,11 +10,11 @@
 [![hacs][hacsbadge]][hacs]
 [![Project Maintenance][maintenance-shield]][user_profile]
 
-Control your Braiins OS+ enabled Bitcoin miner from Home Assistant.
+Control your Bitcoin miner from Home Assistant.
 
-Uses [pyasic](https://github.com/UpstreamData/pyasic) by [UpstreamData](https://github.com/UpstreamData) to talk to the APIs of the miners.
+### [Supported miners are listed here](https://pyasic.readthedocs.io/en/latest/miners/supported_types/).
 
-**This component will set up the following platforms.**
+**This component will set up the following platforms -**
 
 | Platform | Description               |
 | -------- | ------------------------- |
@@ -38,7 +38,9 @@ If you want to contribute to this please read the [Contribution guidelines](CONT
 
 This project was generated from [@oncleben31](https://github.com/oncleben31)'s [Home Assistant Custom Component Cookiecutter](https://github.com/oncleben31/cookiecutter-homeassistant-custom-component) template.
 
-Code template was mainly taken from [@Ludeeus](https://github.com/ludeeus)'s [integration_blueprint][integration_blueprint] template
+Code template was mainly taken from [@Ludeeus](https://github.com/ludeeus)'s [integration_blueprint][integration_blueprint] template.
+
+Miner control and data is handled using [@UpstreamData](https://github.com/UpstreamData)'s [pyasic](https://github.com/UpstreamData/pyasic).
 
 ---
 
