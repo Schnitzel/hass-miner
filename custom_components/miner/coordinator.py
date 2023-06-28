@@ -58,6 +58,7 @@ class MinerCoordinator(DataUpdateCoordinator):
             "make": miner_data.make,
             "model": miner_data.model,
             "ip": self.miner.ip,
+            "is_mining": miner_data.is_mining,
             "miner_sensors": {
                 "hashrate": miner_data.hashrate,
                 "ideal_hashrate": miner_data.nominal_hashrate,
