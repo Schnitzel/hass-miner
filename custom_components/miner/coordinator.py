@@ -64,6 +64,7 @@ class MinerCoordinator(DataUpdateCoordinator):
                 "temperature": int(miner_data.temperature_avg),
                 "power_limit": miner_data.wattage_limit,
                 "miner_consumption": miner_data.wattage,
+                "is_mining": miner_data.is_mining,
             },
             "board_sensors": {
                 board.slot: {

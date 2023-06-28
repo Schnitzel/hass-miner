@@ -94,14 +94,20 @@ class MinerActiveSwitch(CoordinatorEntity[MinerCoordinator], SwitchEntity):
 
     async def async_turn_on(self) -> None:
         """Turn on miner."""
+        miner = self.coordinator.miner
+        if not miner.supports_autotuning:
+            raise TypeError(f"{miner} does not support shutdown mode.")
         self._attr_is_on = True
-        await self.coordinator.miner.api.resume()
+        await miner.resume_mining()
         self.async_write_ha_state()
 
     async def async_turn_off(self) -> None:
         """Turn off miner."""
+        miner = self.coordinator.miner
+        if not miner.supports_autotuning:
+            raise TypeError(f"{miner} does not support shutdown mode.")
         self._attr_is_on = False
-        await self.coordinator.miner.api.pause()
+        await miner.stop_mining()
         self.async_write_ha_state()
 
     @callback
@@ -109,6 +115,6 @@ class MinerActiveSwitch(CoordinatorEntity[MinerCoordinator], SwitchEntity):
 
         # There isn't really a good way to check if the Miner is on.
         # But when it's off there is no temperature reported, so we use this
-        self._attr_is_on = self.coordinator.data["miner_sensors"]["temperature"] != 0
+        self._attr_is_on = self.coordinator.data["miner_sensors"]["is_mining"]
 
         super()._handle_coordinator_update()

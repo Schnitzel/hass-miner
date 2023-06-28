@@ -93,7 +93,7 @@ class MinerPowerLimitNumber(CoordinatorEntity[MinerCoordinator], NumberEntity):
 
         miner = self.coordinator.miner
         if not miner.supports_autotuning:
-            raise TypeError("This miner does not support setting power limit.")
+            raise TypeError(f"{miner} does not support setting power limit.")
 
         result = await miner.set_power_limit(int(value))
         if not result:
