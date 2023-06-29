@@ -92,6 +92,9 @@ class MinerPowerLimitNumber(CoordinatorEntity[MinerCoordinator], NumberEntity):
         """Update the current value."""
 
         miner = self.coordinator.miner
+
+        _LOGGER.debug("%s: setting power limit to %s.", miner.ip, value)
+
         if not miner.supports_autotuning:
             raise TypeError(f"{miner} does not support setting power limit.")
 
@@ -104,7 +107,6 @@ class MinerPowerLimitNumber(CoordinatorEntity[MinerCoordinator], NumberEntity):
 
     @callback
     def _handle_coordinator_update(self) -> None:
-
         self._attr_value = self.coordinator.data["miner_sensors"]["power_limit"]
 
         super()._handle_coordinator_update()
