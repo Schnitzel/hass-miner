@@ -29,7 +29,7 @@ class MinerCoordinator(DataUpdateCoordinator):
         super().__init__(
             hass=hass,
             logger=_LOGGER,
-            name=entry.title, # hostname for now
+            name=entry.title,  # hostname for now
             update_interval=timedelta(seconds=10),
             request_refresh_debouncer=Debouncer(
                 hass,
@@ -75,5 +75,4 @@ class MinerCoordinator(DataUpdateCoordinator):
                 for board in miner_data.hashboards
             },
         }
-
         return data
