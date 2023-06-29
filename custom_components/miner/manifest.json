@@ -5,7 +5,7 @@
   "config_flow": true,
   "documentation": "https://github.com/Schnitzel/hass-miner",
   "requirements": [
-    "pyasic==0.36.3"
+    "pyasic==0.36.4"
   ],
   "ssdp": [],
   "zeroconf": [],

@@ -6,3 +6,5 @@ logger:
   default: info
   logs:
     custom_components.miner: debug
+debugpy:
+  start: true
