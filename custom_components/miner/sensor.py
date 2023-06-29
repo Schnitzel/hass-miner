@@ -4,6 +4,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Callable
 from dataclasses import dataclass
+from typing import Union
 
 from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.components.sensor import SensorEntity
@@ -31,13 +32,13 @@ _LOGGER = logging.getLogger(__name__)
 class MinerSensorEntityDescription(SensorEntityDescription):
     """Class describing IotaWatt sensor entities."""
 
-    value: Callable | None = None
+    value: Union[Callable, None] = None
 
 
 class MinerNumberEntityDescription(SensorEntityDescription):
     """Class describing IotaWatt number entities."""
 
-    value: Callable | None = None
+    value: Union[Callable, None] = None
 
 
 ENTITY_DESCRIPTION_KEY_MAP: dict[
@@ -67,6 +68,12 @@ ENTITY_DESCRIPTION_KEY_MAP: dict[
         state_class=SensorStateClass.MEASUREMENT,
         device_class="Hashrate",
     ),
+    "ideal_hashrate": MinerSensorEntityDescription(
+        "Ideal Hashrate",
+        native_unit_of_measurement="TH/s",
+        state_class=SensorStateClass.MEASUREMENT,
+        device_class="Hashrate",
+    ),
     "board_hashrate": MinerSensorEntityDescription(
         "Board Hashrate",
         native_unit_of_measurement="TH/s",
@@ -81,12 +88,6 @@ ENTITY_DESCRIPTION_KEY_MAP: dict[
     ),
     "miner_consumption": MinerSensorEntityDescription(
         "Miner Consumption",
-        state_class=SensorStateClass.MEASUREMENT,
-        native_unit_of_measurement=POWER_WATT,
-        device_class=SensorDeviceClass.POWER,
-    ),
-    "scaled_power_limit": MinerSensorEntityDescription(
-        "Scaled Power Limit",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=POWER_WATT,
         device_class=SensorDeviceClass.POWER,
@@ -198,10 +199,10 @@ class MinerSensor(CoordinatorEntity[MinerCoordinator], SensorEntity):
     def device_info(self) -> entity.DeviceInfo:
         """Return device info."""
         return entity.DeviceInfo(
-            identifiers={(DOMAIN, self.coordinator.data["hostname"])},
-            manufacturer="Antminer",
+            identifiers={(DOMAIN, self.coordinator.data["mac"])},
+            manufacturer=self.coordinator.data["make"],
             model=self.coordinator.data["model"],
-            name=f"Antminer {self.coordinator.data['model']}",
+            name=f"{self.coordinator.data['make']} {self.coordinator.data['model']}",
         )
 
     @callback
@@ -256,10 +257,10 @@ class MinerBoardSensor(CoordinatorEntity[MinerCoordinator], SensorEntity):
     def device_info(self) -> entity.DeviceInfo:
         """Return device info."""
         return entity.DeviceInfo(
-            identifiers={(DOMAIN, self.coordinator.data["hostname"])},
-            manufacturer="Antminer",
+            identifiers={(DOMAIN, self.coordinator.data["mac"])},
+            manufacturer=self.coordinator.data["make"],
             model=self.coordinator.data["model"],
-            name=f"Antminer {self.coordinator.data['model']}",
+            name=f"{self.coordinator.data['make']} {self.coordinator.data['model']}",
         )
 
     @callback

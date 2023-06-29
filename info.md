@@ -9,12 +9,12 @@
 [![Discord][discord-shield]][discord]
 [![Community Forum][forum-shield]][forum]
 
-**This component will set up the following platforms.**
+**This component will set up the following platforms -**
 
 | Platform        | Description                         |
-| --------------- | ----------------------------------- |
+| --------------- |-------------------------------------|
 | `binary_sensor` | Show something `True` or `False`.   |
-| `sensor`        | Show info from API.                 |
+| `sensor`        | Show miner sensor info.             |
 | `switch`        | Switch something `True` or `False`. |
 
 ![example][exampleimg]
@@ -24,7 +24,7 @@
 ## Installation
 
 1. Click install.
-1. In the HA UI go to "Configuration" -> "Integrations" click "+" and search for "miner".
+2. In the HA UI go to "Configuration" -> "Integrations" click "+" and search for "miner".
 
 {% endif %}
 
@@ -36,7 +36,9 @@
 
 This project was generated from [@oncleben31](https://github.com/oncleben31)'s [Home Assistant Custom Component Cookiecutter](https://github.com/oncleben31/cookiecutter-homeassistant-custom-component) template.
 
-Code template was mainly taken from [@Ludeeus](https://github.com/ludeeus)'s [integration_blueprint][integration_blueprint] template
+Code template was mainly taken from [@Ludeeus](https://github.com/ludeeus)'s [integration_blueprint][integration_blueprint] template.
+
+Miner control and data is handled using [@UpstreamData](https://github.com/UpstreamData)'s [pyasic](https://github.com/UpstreamData/pyasic).
 
 ---
 

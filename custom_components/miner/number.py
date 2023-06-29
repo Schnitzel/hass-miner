@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import logging
 
-import yaml
+import pyasic
 from homeassistant.components.number import NumberEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import callback
@@ -30,7 +30,7 @@ async def async_setup_entry(
     created = set()
 
     @callback
-    def _create_entity(key: str) -> NumberEntity:
+    def _create_entity(key: str):
         """Create a sensor entity."""
         created.add(key)
 
@@ -55,6 +55,7 @@ async def async_setup_entry(
     # coordinator.async_add_listener(new_data_received)
 
 
+# TODO: This needs an update.  Lots of weird lint errors here.
 class MinerPowerLimitNumber(CoordinatorEntity[MinerCoordinator], NumberEntity):
     """Defines a Miner Number to set the Power Limit of the Miner"""
 
@@ -81,21 +82,22 @@ class MinerPowerLimitNumber(CoordinatorEntity[MinerCoordinator], NumberEntity):
     def device_info(self) -> entity.DeviceInfo:
         """Return device info."""
         return entity.DeviceInfo(
-            identifiers={(DOMAIN, self.coordinator.data["hostname"])},
-            manufacturer="Antminer",
+            identifiers={(DOMAIN, self.coordinator.data["mac"])},
+            manufacturer=self.coordinator.data["make"],
             model=self.coordinator.data["model"],
-            name=f"Antminer {self.coordinator.data['model']}",
+            name=f"{self.coordinator.data['make']} {self.coordinator.data['model']}",
         )
 
     async def async_set_value(self, value):
         """Update the current value."""
 
         miner = self.coordinator.miner
-        await miner.get_config()
-        updated_config = yaml.load(miner.config, Loader=yaml.SafeLoader)
-        updated_config["autotuning"]["wattage"] = int(value)
-        config_yaml = yaml.dump(updated_config, sort_keys=False)
-        await miner.send_config(config_yaml)
+        if not miner.supports_autotuning:
+            raise TypeError(f"{miner} does not support setting power limit.")
+
+        result = await miner.set_power_limit(int(value))
+        if not result:
+            raise pyasic.APIError("Failed to set wattage.")
 
         self._attr_value = value
         self.async_write_ha_state()

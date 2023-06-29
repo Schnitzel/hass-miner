@@ -4,6 +4,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Callable
 from dataclasses import dataclass
+from typing import Union
 
 from homeassistant.components.sensor import SensorEntityDescription
 from homeassistant.components.switch import SwitchEntity
@@ -26,7 +27,7 @@ _LOGGER = logging.getLogger(__name__)
 class MinerSensorEntityDescription(SensorEntityDescription):
     """Class describing IotaWatt sensor entities."""
 
-    value: Callable | None = None
+    value: Union[Callable, None] = None
 
 
 async def async_setup_entry(
@@ -85,29 +86,34 @@ class MinerActiveSwitch(CoordinatorEntity[MinerCoordinator], SwitchEntity):
     def device_info(self) -> entity.DeviceInfo:
         """Return device info."""
         return entity.DeviceInfo(
-            identifiers={(DOMAIN, self.coordinator.data["hostname"])},
-            manufacturer="Antminer",
+            identifiers={(DOMAIN, self.coordinator.data["mac"])},
+            manufacturer=self.coordinator.data["make"],
             model=self.coordinator.data["model"],
-            name=f"Antminer {self.coordinator.data['model']}",
+            name=f"{self.coordinator.data['make']} {self.coordinator.data['model']}",
         )
 
     async def async_turn_on(self) -> None:
         """Turn on miner."""
+        miner = self.coordinator.miner
+        if not miner.supports_shutdown:
+            raise TypeError(f"{miner} does not support shutdown mode.")
         self._attr_is_on = True
-        await self.coordinator.miner.api.resume()
+        await miner.resume_mining()
         self.async_write_ha_state()
 
     async def async_turn_off(self) -> None:
         """Turn off miner."""
+        miner = self.coordinator.miner
+        if not miner.supports_shutdown:
+            raise TypeError(f"{miner} does not support shutdown mode.")
         self._attr_is_on = False
-        await self.coordinator.miner.api.pause()
+        await miner.stop_mining()
         self.async_write_ha_state()
 
     @callback
     def _handle_coordinator_update(self) -> None:
-
-        # There isn't really a good way to check if the Miner is on.
-        # But when it's off there is no temperature reported, so we use this
-        self._attr_is_on = self.coordinator.data["miner_sensors"]["temperature"] != 0
+        is_mining = self.coordinator.data["is_mining"]
+        if is_mining is not None:
+            self._attr_is_on = is_mining
 
         super()._handle_coordinator_update()
