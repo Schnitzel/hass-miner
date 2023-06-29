@@ -1,7 +1,6 @@
 """IoTaWatt DataUpdateCoordinator."""
 import logging
 from datetime import timedelta
-from typing import Union
 
 import pyasic
 from homeassistant.config_entries import ConfigEntry
@@ -21,7 +20,7 @@ REQUEST_REFRESH_DEFAULT_COOLDOWN = 5
 class MinerCoordinator(DataUpdateCoordinator):
     """Class to manage fetching update data from the IoTaWatt Energy Device."""
 
-    miner: Union[pyasic.AnyMiner, None] = None
+    miner: pyasic.AnyMiner | None = None
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
         """Initialize MinerCoordinator object."""

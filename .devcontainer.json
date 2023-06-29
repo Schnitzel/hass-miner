@@ -2,9 +2,7 @@
   "name": "ludeeus/integration_blueprint",
   "image": "mcr.microsoft.com/vscode/devcontainers/python:0-3.11-bullseye",
   "postCreateCommand": "scripts/setup",
-  "forwardPorts": [
-    8123
-  ],
+  "forwardPorts": [8123],
   "portsAttributes": {
     "8123": {
       "label": "Home Assistant",

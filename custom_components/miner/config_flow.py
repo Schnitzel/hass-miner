@@ -22,9 +22,7 @@ _LOGGER = logging.getLogger(__name__)
 # config_entry_flow.register_discovery_flow(DOMAIN, "Miner", _async_has_devices)
 
 
-async def validate_input(
-    data: dict[str, str]
-) -> dict[str, str]:
+async def validate_input(data: dict[str, str]) -> dict[str, str]:
     """Validate the user input allows us to connect."""
     miner_ip = data.get(CONF_IP)
 
@@ -70,11 +68,13 @@ class MinerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return self.async_show_form(step_id="user", data_schema=schema, errors=errors)
 
     async def async_step_hostname(self, user_input=None):
-        """Ask for Hostname if we can't load it automated"""
+        """Ask for Hostname if we can't load it automated."""
 
         miner_ip = self._data.get(CONF_IP)
-        miner = await pyasic.get_miner(miner_ip) # should be fast, cached
-        hn = await miner.get_hostname() # TODO: this should be replaced with something, MAC maybe?  Hostname can be duplicates (mostly on stock).
+        miner = await pyasic.get_miner(miner_ip)  # should be fast, cached
+        hn = (
+            await miner.get_hostname()
+        )  # TODO: this should be replaced with something, MAC maybe?  Hostname can be duplicates (mostly on stock).
 
         if user_input is None:
             user_input = {}
