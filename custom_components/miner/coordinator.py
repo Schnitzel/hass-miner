@@ -51,6 +51,11 @@ class MinerCoordinator(DataUpdateCoordinator):
         except pyasic.APIError as err:
             raise UpdateFailed("API Error") from err
 
+        except Exception as err:
+            raise UpdateFailed("API Error") from err
+
+        _LOGGER.debug(miner_data)
+
         data = {
             "hostname": miner_data.hostname,
             "mac": miner_data.mac,
