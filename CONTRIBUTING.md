@@ -50,36 +50,6 @@ to make sure the code follows the style.
 Or use the `pre-commit` settings implemented in this repository
 (see deicated section below).
 
-## Test your code modification
-
-This custom component is based on [integration_blueprint template](https://github.com/custom-components/integration_blueprint).
-
-It comes with development environment in a container, easy to launch
-if you use Visual Studio Code. With this container you will have a stand alone
-Home Assistant instance running and already configured with the included
-[`.devcontainer/configuration.yaml`](./.devcontainer/configuration.yaml)
-file.
-
-You can use the `pre-commit` settings implemented in this repository to have
-linting tool checking your contributions (see deicated section below).
-
-You should also verify that existing [tests](./tests) are still working
-and you are encouraged to add new ones.
-You can run the tests using the following commands from the root folder:
-
-```bash
-# Create a virtual environment
-python3 -m venv venv
-source venv/bin/activate
-# Install requirements
-pip install -r requirements_test.txt
-# Run tests and get a summary of successes/failures and code coverage
-pytest --durations=10 --cov-report term-missing --cov=custom_components.miner tests
-```
-
-If any of the tests fail, make the necessary changes to the tests as part of
-your changes to the integration.
-
 ## Pre-commit
 
 You can use the [pre-commit](https://pre-commit.com/) settings included in the
