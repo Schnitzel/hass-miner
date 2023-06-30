@@ -179,7 +179,7 @@ class MinerSensor(CoordinatorEntity[MinerCoordinator], SensorEntity):
     ) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator=coordinator)
-        self._attr_unique_id = f"{self.coordinator.data['hostname']}-{key}"
+        self._attr_unique_id = f"{self.coordinator.data['mac']}-{key}"
         self._key = key
         self.entity_description = entity_description
         self._attr_force_update = True
@@ -192,7 +192,7 @@ class MinerSensor(CoordinatorEntity[MinerCoordinator], SensorEntity):
     @property
     def name(self) -> str | None:
         """Return name of the entity."""
-        return f"{self.coordinator.data['hostname']} {self.entity_description.key}"
+        return f"{self.coordinator.entry.title} {self.entity_description.key}"
 
     @property
     def device_info(self) -> entity.DeviceInfo:
@@ -201,7 +201,8 @@ class MinerSensor(CoordinatorEntity[MinerCoordinator], SensorEntity):
             identifiers={(DOMAIN, self.coordinator.data["mac"])},
             manufacturer=self.coordinator.data["make"],
             model=self.coordinator.data["model"],
-            name=f"{self.coordinator.data['make']} {self.coordinator.data['model']}",
+            sw_version=self.coordinator.data["fw_ver"],
+            name=f"{self.coordinator.entry.title}",
         )
 
     @callback
@@ -230,7 +231,7 @@ class MinerBoardSensor(CoordinatorEntity[MinerCoordinator], SensorEntity):
     ) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator=coordinator)
-        self._attr_unique_id = f"{self.coordinator.data['hostname']}-{board}-{sensor}"
+        self._attr_unique_id = f"{self.coordinator.data['mac']}-{board}-{sensor}"
         self._board = board
         self._sensor = sensor
         self.entity_description = entity_description
@@ -250,7 +251,7 @@ class MinerBoardSensor(CoordinatorEntity[MinerCoordinator], SensorEntity):
     @property
     def name(self) -> str | None:
         """Return name of the entity."""
-        return f"{self.coordinator.data['hostname']} Board #{self._board} {self.entity_description.key}"
+        return f"{self.coordinator.entry.title} Board #{self._board} {self.entity_description.key}"
 
     @property
     def device_info(self) -> entity.DeviceInfo:
@@ -259,7 +260,8 @@ class MinerBoardSensor(CoordinatorEntity[MinerCoordinator], SensorEntity):
             identifiers={(DOMAIN, self.coordinator.data["mac"])},
             manufacturer=self.coordinator.data["make"],
             model=self.coordinator.data["model"],
-            name=f"{self.coordinator.data['make']} {self.coordinator.data['model']}",
+            sw_version=self.coordinator.data["fw_ver"],
+            name=f"{self.coordinator.entry.title}",
         )
 
     @callback

@@ -73,14 +73,14 @@ class MinerActiveSwitch(CoordinatorEntity[MinerCoordinator], SwitchEntity):
     ) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator=coordinator)
-        self._attr_unique_id = f"{self.coordinator.data['hostname']}-active"
+        self._attr_unique_id = f"{self.coordinator.data['mac']}-active"
         _LOGGER.debug(self.coordinator.data["miner_sensors"]["temperature"])
-        self._attr_is_on = self.coordinator.data["miner_sensors"]["temperature"] != 0
+        self._attr_is_on = self.coordinator.data["is_mining"]
 
     @property
     def name(self) -> str | None:
         """Return name of the entity."""
-        return f"{self.coordinator.data['hostname']} active"
+        return f"{self.coordinator.entry.title} active"
 
     @property
     def device_info(self) -> entity.DeviceInfo:
@@ -89,13 +89,14 @@ class MinerActiveSwitch(CoordinatorEntity[MinerCoordinator], SwitchEntity):
             identifiers={(DOMAIN, self.coordinator.data["mac"])},
             manufacturer=self.coordinator.data["make"],
             model=self.coordinator.data["model"],
-            name=f"{self.coordinator.data['make']} {self.coordinator.data['model']}",
+            sw_version=self.coordinator.data["fw_ver"],
+            name=f"{self.coordinator.entry.title}",
         )
 
     async def async_turn_on(self) -> None:
         """Turn on miner."""
         miner = self.coordinator.miner
-        _LOGGER.debug("%s: Resume mining.", miner.ip)
+        _LOGGER.debug("%s: Resume mining.", self.coordinator.entry.title)
         if not miner.supports_shutdown:
             raise TypeError(f"{miner} does not support shutdown mode.")
         self._attr_is_on = True
@@ -105,7 +106,7 @@ class MinerActiveSwitch(CoordinatorEntity[MinerCoordinator], SwitchEntity):
     async def async_turn_off(self) -> None:
         """Turn off miner."""
         miner = self.coordinator.miner
-        _LOGGER.debug("%s: Stop mining.", miner.ip)
+        _LOGGER.debug("%s: Stop mining.", self.coordinator.entry.title)
         if not miner.supports_shutdown:
             raise TypeError(f"{miner} does not support shutdown mode.")
         self._attr_is_on = False
@@ -116,8 +117,6 @@ class MinerActiveSwitch(CoordinatorEntity[MinerCoordinator], SwitchEntity):
     def _handle_coordinator_update(self) -> None:
         is_mining = self.coordinator.data["miner_sensors"]["temperature"]
         if is_mining is not None:
-            self._attr_is_on = (
-                self.coordinator.data["miner_sensors"]["temperature"] != 0
-            )
+            self._attr_is_on = self.coordinator.data["is_mining"]
 
         super()._handle_coordinator_update()

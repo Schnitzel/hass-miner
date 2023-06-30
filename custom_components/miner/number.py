@@ -65,7 +65,7 @@ class MinerPowerLimitNumber(CoordinatorEntity[MinerCoordinator], NumberEntity):
     ) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator=coordinator)
-        self._attr_unique_id = f"{self.coordinator.data['hostname']}-power_limit"
+        self._attr_unique_id = f"{self.coordinator.data['mac']}-power_limit"
 
         self._attr_value = self.coordinator.data["miner_sensors"]["power_limit"]
 
@@ -76,7 +76,7 @@ class MinerPowerLimitNumber(CoordinatorEntity[MinerCoordinator], NumberEntity):
     @property
     def name(self) -> str | None:
         """Return name of the entity."""
-        return f"{self.coordinator.data['hostname']} Power Limit"
+        return f"{self.coordinator.entry.title} Power Limit"
 
     @property
     def device_info(self) -> entity.DeviceInfo:
@@ -85,7 +85,8 @@ class MinerPowerLimitNumber(CoordinatorEntity[MinerCoordinator], NumberEntity):
             identifiers={(DOMAIN, self.coordinator.data["mac"])},
             manufacturer=self.coordinator.data["make"],
             model=self.coordinator.data["model"],
-            name=f"{self.coordinator.data['make']} {self.coordinator.data['model']}",
+            sw_version=self.coordinator.data["fw_ver"],
+            name=f"{self.coordinator.entry.title}",
         )
 
     async def async_set_value(self, value):
@@ -93,10 +94,14 @@ class MinerPowerLimitNumber(CoordinatorEntity[MinerCoordinator], NumberEntity):
 
         miner = self.coordinator.miner
 
-        _LOGGER.debug("%s: setting power limit to %s.", miner.ip, value)
+        _LOGGER.debug(
+            "%s: setting power limit to %s.", self.coordinator.entry.title, value
+        )
 
         if not miner.supports_autotuning:
-            raise TypeError(f"{miner} does not support setting power limit.")
+            raise TypeError(
+                f"{self.coordinator.entry.title} does not support setting power limit."
+            )
 
         result = await miner.set_power_limit(int(value))
         if not result:

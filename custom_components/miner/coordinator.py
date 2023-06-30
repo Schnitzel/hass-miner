@@ -10,6 +10,8 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.helpers.update_coordinator import UpdateFailed
 
 from .const import CONF_IP
+from .const import CONF_PASSWORD
+from .const import CONF_USERNAME
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -28,7 +30,7 @@ class MinerCoordinator(DataUpdateCoordinator):
         super().__init__(
             hass=hass,
             logger=_LOGGER,
-            name=entry.title,  # hostname for now
+            name=entry.title,
             update_interval=timedelta(seconds=10),
             request_refresh_debouncer=Debouncer(
                 hass,
@@ -42,10 +44,15 @@ class MinerCoordinator(DataUpdateCoordinator):
         """Fetch sensors from miners."""
 
         miner_ip = self.entry.data[CONF_IP]
+        miner_username = self.entry.data[CONF_USERNAME]
+        miner_password = self.entry.data[CONF_PASSWORD]
 
         try:
             if self.miner is None:
                 self.miner = await pyasic.get_miner(miner_ip)
+                self.miner.username = miner_username
+                self.miner.pwd = miner_password
+
             miner_data = await self.miner.get_data()
 
         except pyasic.APIError as err:
@@ -63,6 +70,7 @@ class MinerCoordinator(DataUpdateCoordinator):
             "model": miner_data.model,
             "ip": self.miner.ip,
             "is_mining": miner_data.is_mining,
+            "fw_ver": miner_data.fw_ver,
             "miner_sensors": {
                 "hashrate": miner_data.hashrate,
                 "ideal_hashrate": miner_data.nominal_hashrate,
