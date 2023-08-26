@@ -42,7 +42,8 @@ async def validate_input(data: dict[str, str]) -> dict[str, str]:
         miner.pwd = miner_password
         await miner.get_data()
 
-    except Exception:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
+        _LOGGER.error(f"Miner setup error: {e}")
         return {
             "base": "Unable to authenticate with Miner, is Username & Password correct?"
         }
