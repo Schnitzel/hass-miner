@@ -55,23 +55,13 @@ async def async_setup_entry(
     # coordinator.async_add_listener(new_data_received)
 
 
-# TODO: This needs an update.  Lots of weird lint errors here.
 class MinerPowerLimitNumber(CoordinatorEntity[MinerCoordinator], NumberEntity):
     """Defines a Miner Number to set the Power Limit of the Miner."""
 
-    def __init__(
-        self,
-        coordinator: MinerCoordinator,
-    ) -> None:
-        """Initialize the sensor."""
+    def __init__(self, coordinator: MinerCoordinator):
+        """Initialize the PowerLimit entity."""
         super().__init__(coordinator=coordinator)
-        self._attr_unique_id = f"{self.coordinator.data['mac']}-power_limit"
-
-        self._attr_value = self.coordinator.data["miner_sensors"]["power_limit"]
-
-        self._attr_min_value = 100
-        self._attr_max_value = 5000
-        self._attr_step = 100
+        self._attr_native_value = self.coordinator.data["miner_sensors"]["power_limit"]
 
     @property
     def name(self) -> str | None:
@@ -89,7 +79,32 @@ class MinerPowerLimitNumber(CoordinatorEntity[MinerCoordinator], NumberEntity):
             name=f"{self.coordinator.entry.title}",
         )
 
-    async def async_set_value(self, value):
+    @property
+    def unique_id(self) -> str | None:
+        """Return device UUID."""
+        return f"{self.coordinator.data['mac']}-power_limit"
+
+    @property
+    def native_min_value(self) -> float | None:
+        """Return device minimum value."""
+        return 100
+
+    @property
+    def native_max_value(self) -> float | None:
+        """Return device maximum value."""
+        return 5000
+
+    @property
+    def native_step(self) -> float | None:
+        """Return device increment step."""
+        return 100
+
+    @property
+    def native_unit_of_measurement(self):
+        """Return device unit of measurement."""
+        return "W"
+
+    async def async_set_native_value(self, value):
         """Update the current value."""
 
         miner = self.coordinator.miner
@@ -107,11 +122,11 @@ class MinerPowerLimitNumber(CoordinatorEntity[MinerCoordinator], NumberEntity):
         if not result:
             raise pyasic.APIError("Failed to set wattage.")
 
-        self._attr_value = value
+        self._attr_native_value = value
         self.async_write_ha_state()
 
     @callback
     def _handle_coordinator_update(self) -> None:
-        self._attr_value = self.coordinator.data["miner_sensors"]["power_limit"]
+        self._attr_native_value = self.coordinator.data["miner_sensors"]["power_limit"]
 
         super()._handle_coordinator_update()
