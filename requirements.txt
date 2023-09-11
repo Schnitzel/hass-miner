@@ -1,6 +1,6 @@
 minerinterface==0.5.3
 colorlog==6.7.0
-homeassistant==2023.7.1
+homeassistant==2023.9.1
 pip>=21.0,<23.2
 ruff==0.0.267
 pyasic==0.36.9
