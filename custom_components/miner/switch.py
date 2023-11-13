@@ -115,7 +115,7 @@ class MinerActiveSwitch(CoordinatorEntity[MinerCoordinator], SwitchEntity):
 
     @callback
     def _handle_coordinator_update(self) -> None:
-        is_mining = self.coordinator.data["miner_sensors"]["temperature"]
+        is_mining = self.coordinator.data["is_mining"]
         if is_mining is not None:
             self._attr_is_on = self.coordinator.data["is_mining"]
 
