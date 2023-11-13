@@ -74,7 +74,6 @@ class MinerActiveSwitch(CoordinatorEntity[MinerCoordinator], SwitchEntity):
         """Initialize the sensor."""
         super().__init__(coordinator=coordinator)
         self._attr_unique_id = f"{self.coordinator.data['mac']}-active"
-        _LOGGER.debug(self.coordinator.data["miner_sensors"]["temperature"])
         self._attr_is_on = self.coordinator.data["is_mining"]
 
     @property
