@@ -24,7 +24,7 @@ Control your Bitcoin miner from Home Assistant.
 
 ## Installation
 
-Use HACS, add the custom repo https://github.com/UpstreamData/hass-miner to it
+Use HACS, add the custom repo https://github.com/Schnitzel/hass-miner to it
 
 Installation and usage:
 
