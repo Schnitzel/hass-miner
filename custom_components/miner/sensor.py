@@ -91,6 +91,12 @@ ENTITY_DESCRIPTION_KEY_MAP: dict[
         native_unit_of_measurement=POWER_WATT,
         device_class=SensorDeviceClass.POWER,
     ),
+    "efficiency": MinerSensorEntityDescription(
+        "Efficiency",
+        native_unit_of_measurement="W/Ths",
+        state_class=SensorStateClass.MEASUREMENT,
+        device_class="Efficiency",
+    ),
 }
 
 
