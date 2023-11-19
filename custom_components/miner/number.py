@@ -123,7 +123,7 @@ class MinerPowerLimitNumber(CoordinatorEntity[MinerCoordinator], NumberEntity):
         if isinstance(miner, BOSMiner):
             max_diff = 500
             try:
-                diff = int(self.coordinator.data["miner_sensors"]["power_limit"]) - int(value)
+                diff = int(value) - int(self.coordinator.data["miner_sensors"]["power_limit"])
                 smooth_tune = -max_diff < diff < max_diff
 
                 if smooth_tune:
