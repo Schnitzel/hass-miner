@@ -130,9 +130,13 @@ class MinerPowerLimitNumber(CoordinatorEntity[MinerCoordinator], NumberEntity):
 
                     if smooth_tune:
                         if diff < 0:
-                            result = await miner.web.grpc.decrement_power_target(abs(diff))
+                            result = await miner.web.grpc.decrement_power_target(
+                                abs(diff)
+                            )
                         else:
-                            result = await miner.web.grpc.increment_power_target(abs(diff))
+                            result = await miner.web.grpc.increment_power_target(
+                                abs(diff)
+                            )
                     else:
                         result = await miner.web.grpc.set_power_target(int(value))
                 except TypeError:
@@ -141,7 +145,9 @@ class MinerPowerLimitNumber(CoordinatorEntity[MinerCoordinator], NumberEntity):
                 result = await miner.set_power_limit(int(value))
 
         else:
-            result = await miner.set_power_limit(int(value)) # noqa: ignore miner being assumed to be None
+            result = await miner.set_power_limit(
+                int(value)
+            )  # noqa: ignore miner being assumed to be None
 
         if not result:
             raise pyasic.APIError("Failed to set wattage.")
@@ -152,6 +158,8 @@ class MinerPowerLimitNumber(CoordinatorEntity[MinerCoordinator], NumberEntity):
     @callback
     def _handle_coordinator_update(self) -> None:
         if self.coordinator.data["miner_sensors"]["power_limit"] is not None:
-            self._attr_native_value = self.coordinator.data["miner_sensors"]["power_limit"]
+            self._attr_native_value = self.coordinator.data["miner_sensors"][
+                "power_limit"
+            ]
 
         super()._handle_coordinator_update()
