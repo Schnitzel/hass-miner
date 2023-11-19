@@ -44,13 +44,14 @@ async def async_setup_entry(
         created.add(key)
 
     await coordinator.async_config_entry_first_refresh()
-    async_add_entities(
-        [
-            MinerActiveSwitch(
-                coordinator=coordinator,
-            )
-        ]
-    )
+    if coordinator.miner.supports_shutdown:
+        async_add_entities(
+            [
+                MinerActiveSwitch(
+                    coordinator=coordinator,
+                )
+            ]
+        )
 
     # @callback
     # def new_data_received():

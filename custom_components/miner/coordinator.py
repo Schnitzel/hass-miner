@@ -20,7 +20,7 @@ REQUEST_REFRESH_DEFAULT_COOLDOWN = 5
 
 
 class MinerCoordinator(DataUpdateCoordinator):
-    """Class to manage fetching update data from the IoTaWatt Energy Device."""
+    """Class to manage fetching update data from the Miner."""
 
     miner: pyasic.AnyMiner | None = None
 
@@ -53,7 +53,19 @@ class MinerCoordinator(DataUpdateCoordinator):
                 self.miner.username = miner_username
                 self.miner.pwd = miner_password
 
-            miner_data = await self.miner.get_data()
+            miner_data = await self.miner.get_data(
+                include=[
+                    "hostname",
+                    "mac",
+                    "is_mining",
+                    "fw_ver",
+                    "hashrate",
+                    "nominal_hashrate",
+                    "hashboards",
+                    "wattage",
+                    "wattage_limit",
+                ]
+            )
 
         except pyasic.APIError as err:
             raise UpdateFailed("API Error") from err

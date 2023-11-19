@@ -4,6 +4,7 @@ from __future__ import annotations
 import logging
 
 import pyasic
+from pyasic.miners.backends import BOSMiner
 from homeassistant.components.number import NumberEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import callback
@@ -35,13 +36,14 @@ async def async_setup_entry(
         created.add(key)
 
     await coordinator.async_config_entry_first_refresh()
-    async_add_entities(
-        [
-            MinerPowerLimitNumber(
-                coordinator=coordinator,
-            )
-        ]
-    )
+    if coordinator.miner.supports_autotuning:
+        async_add_entities(
+            [
+                MinerPowerLimitNumber(
+                    coordinator=coordinator,
+                )
+            ]
+        )
 
     # @callback
     # def new_data_received():
@@ -118,7 +120,14 @@ class MinerPowerLimitNumber(CoordinatorEntity[MinerCoordinator], NumberEntity):
                 f"{self.coordinator.entry.title} does not support setting power limit."
             )
 
-        result = await miner.set_power_limit(int(value))
+        if isinstance(miner, BOSMiner):
+            try:
+                result = await miner.web.grpc.set_power_target(int(value))
+            except pyasic.APIError:
+                result = await miner.set_power_limit(int(value))
+        else:
+            result = await miner.set_power_limit(int(value)) # noqa: ignore miner being assumed to be None
+
         if not result:
             raise pyasic.APIError("Failed to set wattage.")
 
