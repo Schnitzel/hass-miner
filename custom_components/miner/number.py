@@ -121,8 +121,19 @@ class MinerPowerLimitNumber(CoordinatorEntity[MinerCoordinator], NumberEntity):
             )
 
         if isinstance(miner, BOSMiner):
+            max_diff = 500
             try:
-                result = await miner.web.grpc.set_power_target(int(value))
+                diff = int(self.coordinator.data["miner_sensors"]["power_limit"]) - int(value)
+                smooth_tune = -max_diff < diff < max_diff
+
+                if smooth_tune:
+                    if diff < 0:
+                        result = await miner.web.grpc.decrement_power_target(diff)
+                    else:
+                        result = await miner.web.grpc.increment_power_target(diff)
+                else:
+                    result = await miner.web.grpc.set_power_target(int(value))
+
             except pyasic.APIError:
                 result = await miner.set_power_limit(int(value))
         else:
@@ -136,6 +147,7 @@ class MinerPowerLimitNumber(CoordinatorEntity[MinerCoordinator], NumberEntity):
 
     @callback
     def _handle_coordinator_update(self) -> None:
-        self._attr_native_value = self.coordinator.data["miner_sensors"]["power_limit"]
+        if self.coordinator.data["miner_sensors"]["power_limit"] is not None:
+            self._attr_native_value = self.coordinator.data["miner_sensors"]["power_limit"]
 
         super()._handle_coordinator_update()
