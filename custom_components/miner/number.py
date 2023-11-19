@@ -128,7 +128,7 @@ class MinerPowerLimitNumber(CoordinatorEntity[MinerCoordinator], NumberEntity):
 
                 if smooth_tune:
                     if diff < 0:
-                        result = await miner.web.grpc.decrement_power_target(diff)
+                        result = await miner.web.grpc.decrement_power_target(-diff)
                     else:
                         result = await miner.web.grpc.increment_power_target(diff)
                 else:
