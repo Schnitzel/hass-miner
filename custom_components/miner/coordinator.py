@@ -60,7 +60,7 @@ class MinerCoordinator(DataUpdateCoordinator):
                     "is_mining",
                     "fw_ver",
                     "hashrate",
-                    "nominal_hashrate",
+                    "expected_hashrate",
                     "hashboards",
                     "wattage",
                     "wattage_limit",
@@ -85,7 +85,7 @@ class MinerCoordinator(DataUpdateCoordinator):
             "fw_ver": miner_data.fw_ver,
             "miner_sensors": {
                 "hashrate": miner_data.hashrate,
-                "ideal_hashrate": miner_data.nominal_hashrate,
+                "ideal_hashrate": miner_data.expected_hashrate,
                 "temperature": miner_data.temperature_avg,
                 "power_limit": miner_data.wattage_limit,
                 "miner_consumption": miner_data.wattage,
