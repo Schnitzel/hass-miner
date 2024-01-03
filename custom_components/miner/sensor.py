@@ -5,22 +5,26 @@ import logging
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from homeassistant.components.sensor import SensorDeviceClass
-from homeassistant.components.sensor import SensorEntity
-from homeassistant.components.sensor import SensorEntityDescription
-from homeassistant.components.sensor import SensorStateClass
+from homeassistant.components.sensor import (
+    SensorDeviceClass,
+    SensorEntity,
+    SensorEntityDescription,
+    SensorStateClass,
+)
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import POWER_WATT
-from homeassistant.const import TEMP_CELSIUS
-from homeassistant.core import callback
-from homeassistant.core import HomeAssistant
+from homeassistant.const import POWER_WATT, TEMP_CELSIUS
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import StateType
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import (
+    DEVICE_CLASS_EFFICIENCY,
+    DEVICE_CLASS_HASHRATE,
     DOMAIN,
+    JOULES_PER_TERAHASH,
+    TERA_HASH_PER_SECOND,
 )
 from .coordinator import MinerCoordinator
 
@@ -29,15 +33,15 @@ _LOGGER = logging.getLogger(__name__)
 
 @dataclass
 class MinerSensorEntityDescription(SensorEntityDescription):
-    """Class describing IotaWatt sensor entities."""
+    """Class describing ASIC Miner sensor entities."""
 
-    value: Callable | None = None
+    value: Callable = None
 
 
 class MinerNumberEntityDescription(SensorEntityDescription):
-    """Class describing IotaWatt number entities."""
+    """Class describing ASIC Miner number entities."""
 
-    value: Callable | None = None
+    value: Callable = None
 
 
 ENTITY_DESCRIPTION_KEY_MAP: dict[
@@ -63,21 +67,21 @@ ENTITY_DESCRIPTION_KEY_MAP: dict[
     ),
     "hashrate": MinerSensorEntityDescription(
         "Hashrate",
-        native_unit_of_measurement="TH/s",
+        native_unit_of_measurement=TERA_HASH_PER_SECOND,
         state_class=SensorStateClass.MEASUREMENT,
-        device_class="Hashrate",
+        device_class=DEVICE_CLASS_HASHRATE,
     ),
     "ideal_hashrate": MinerSensorEntityDescription(
         "Ideal Hashrate",
-        native_unit_of_measurement="TH/s",
+        native_unit_of_measurement=TERA_HASH_PER_SECOND,
         state_class=SensorStateClass.MEASUREMENT,
-        device_class="Hashrate",
+        device_class=DEVICE_CLASS_HASHRATE,
     ),
     "board_hashrate": MinerSensorEntityDescription(
         "Board Hashrate",
-        native_unit_of_measurement="TH/s",
+        native_unit_of_measurement=TERA_HASH_PER_SECOND,
         state_class=SensorStateClass.MEASUREMENT,
-        device_class="Hashrate",
+        device_class=DEVICE_CLASS_HASHRATE,
     ),
     "power_limit": MinerSensorEntityDescription(
         "Power Limit",
@@ -93,9 +97,9 @@ ENTITY_DESCRIPTION_KEY_MAP: dict[
     ),
     "efficiency": MinerSensorEntityDescription(
         "Efficiency",
-        native_unit_of_measurement="J/TH",
+        native_unit_of_measurement=JOULES_PER_TERAHASH,
         state_class=SensorStateClass.MEASUREMENT,
-        device_class="Efficiency",
+        device_class=DEVICE_CLASS_EFFICIENCY,
     ),
 }
 
@@ -121,53 +125,53 @@ async def async_setup_entry(
         )
 
     @callback
-    def _create_board_entity(board: str, sensor: str) -> MinerBoardSensor:
+    def _create_board_entity(board_num: int, sensor: str) -> MinerBoardSensor:
         """Create a board sensor entity."""
-        sensor_created.add(f"{board}-{sensor}")
+        sensor_created.add(f"board_{board_num}-{sensor}")
         description = ENTITY_DESCRIPTION_KEY_MAP.get(
             sensor, MinerSensorEntityDescription("base_sensor")
         )
         return MinerBoardSensor(
             coordinator=coordinator,
-            board=board,
+            board_num=board_num,
             sensor=sensor,
             entity_description=description,
         )
 
     await coordinator.async_config_entry_first_refresh()
+
     sensors = []
     sensors.extend(
         _create_miner_entity(key) for key in coordinator.data["miner_sensors"]
     )
-    if coordinator.data["board_sensors"]:
-        for board in coordinator.data["board_sensors"]:
-            sensors.extend(
-                _create_board_entity(board, sensor)
-                for sensor in coordinator.data["board_sensors"][board]
-            )
+    for board in range(coordinator.miner.expected_hashboards):
+        sensors.extend(
+            _create_board_entity(board, sensor)
+            for sensor in ["board_temperature", "chip_temperature", "board_hashrate"]
+        )
     if sensors:
         async_add_entities(sensors)
 
     @callback
     def new_data_received():
         """Check for new sensors."""
-        sensors = []
-        sensors.extend(
+        new_sensors = []
+        new_sensors.extend(
             _create_miner_entity(key)
             for key in coordinator.data["miner_sensors"]
             if key not in sensor_created
         )
 
         if coordinator.data["board_sensors"]:
-            for board in coordinator.data["board_sensors"]:
-                sensors.extend(
-                    _create_board_entity(board, sensor)
-                    for sensor in coordinator.data["board_sensors"][board]
-                    if f"{board}-{sensor}" not in sensor_created
+            for new_board in coordinator.data["board_sensors"]:
+                new_sensors.extend(
+                    _create_board_entity(new_board, sensor)
+                    for sensor in coordinator.data["board_sensors"][new_board]
+                    if f"{new_board}-{sensor}" not in sensor_created
                 )
 
-        if sensors:
-            async_add_entities(sensors)
+        if new_sensors:
+            async_add_entities(new_sensors)
 
     coordinator.async_add_listener(new_data_received)
 
@@ -231,14 +235,14 @@ class MinerBoardSensor(CoordinatorEntity[MinerCoordinator], SensorEntity):
     def __init__(
         self,
         coordinator: MinerCoordinator,
-        board: str,
+        board_num: int,
         sensor: str,
         entity_description: MinerSensorEntityDescription,
     ) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator=coordinator)
-        self._attr_unique_id = f"{self.coordinator.data['mac']}-{board}-{sensor}"
-        self._board = board
+        self._attr_unique_id = f"{self.coordinator.data['mac']}-{board_num}-{sensor}"
+        self._board_num = board_num
         self._sensor = sensor
         self.entity_description = entity_description
         self._attr_force_update = True
@@ -247,17 +251,17 @@ class MinerBoardSensor(CoordinatorEntity[MinerCoordinator], SensorEntity):
     def _sensor_data(self):
         """Return sensor data."""
         if (
-            self._board in self.coordinator.data["board_sensors"]
-            and self._sensor in self.coordinator.data["board_sensors"][self._board]
+            self._board_num in self.coordinator.data["board_sensors"]
+            and self._sensor in self.coordinator.data["board_sensors"][self._board_num]
         ):
-            return self.coordinator.data["board_sensors"][self._board][self._sensor]
+            return self.coordinator.data["board_sensors"][self._board_num][self._sensor]
         else:
             return None
 
     @property
     def name(self) -> str | None:
         """Return name of the entity."""
-        return f"{self.coordinator.entry.title} Board #{self._board} {self.entity_description.key}"
+        return f"{self.coordinator.entry.title} Board #{self._board_num} {self.entity_description.key}"
 
     @property
     def device_info(self) -> entity.DeviceInfo:

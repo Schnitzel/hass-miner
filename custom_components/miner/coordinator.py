@@ -6,12 +6,9 @@ import pyasic
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.debounce import Debouncer
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
-from homeassistant.helpers.update_coordinator import UpdateFailed
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .const import CONF_IP
-from .const import CONF_PASSWORD
-from .const import CONF_USERNAME
+from .const import CONF_IP, CONF_PASSWORD, CONF_USERNAME
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -22,7 +19,7 @@ REQUEST_REFRESH_DEFAULT_COOLDOWN = 5
 class MinerCoordinator(DataUpdateCoordinator):
     """Class to manage fetching update data from the Miner."""
 
-    miner: pyasic.AnyMiner | None = None
+    miner: pyasic.AnyMiner = None
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
         """Initialize MinerCoordinator object."""

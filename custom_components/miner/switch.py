@@ -8,15 +8,12 @@ from dataclasses import dataclass
 from homeassistant.components.sensor import SensorEntityDescription
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import callback
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import (
-    DOMAIN,
-)
+from .const import DOMAIN
 from .coordinator import MinerCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -26,7 +23,7 @@ _LOGGER = logging.getLogger(__name__)
 class MinerSensorEntityDescription(SensorEntityDescription):
     """Class describing IotaWatt sensor entities."""
 
-    value: Callable | None = None
+    value: Callable = None
 
 
 async def async_setup_entry(

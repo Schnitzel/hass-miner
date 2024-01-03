@@ -4,18 +4,15 @@ from __future__ import annotations
 import logging
 
 import pyasic
-from pyasic.miners.backends import BOSMiner
 from homeassistant.components.number import NumberEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import callback
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from pyasic.miners.backends import BOSMiner
 
-from .const import (
-    DOMAIN,
-)
+from .const import DOMAIN
 from .coordinator import MinerCoordinator
 
 _LOGGER = logging.getLogger(__name__)
