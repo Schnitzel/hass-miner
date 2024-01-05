@@ -1,4 +1,4 @@
-"""IoTaWatt DataUpdateCoordinator."""
+"""Miner DataUpdateCoordinator."""
 import logging
 from datetime import timedelta
 
@@ -52,15 +52,16 @@ class MinerCoordinator(DataUpdateCoordinator):
 
             miner_data = await self.miner.get_data(
                 include=[
-                    "hostname",
-                    "mac",
-                    "is_mining",
-                    "fw_ver",
-                    "hashrate",
-                    "expected_hashrate",
-                    "hashboards",
-                    "wattage",
-                    "wattage_limit",
+                    pyasic.DataOptions.HOSTNAME,
+                    pyasic.DataOptions.MAC,
+                    pyasic.DataOptions.IS_MINING,
+                    pyasic.DataOptions.FW_VERSION,
+                    pyasic.DataOptions.HASHRATE,
+                    pyasic.DataOptions.EXPECTED_HASHRATE,
+                    pyasic.DataOptions.HASHBOARDS,
+                    pyasic.DataOptions.WATTAGE,
+                    pyasic.DataOptions.WATTAGE_LIMIT,
+                    pyasic.DataOptions.FANS,
                 ]
             )
 
@@ -95,6 +96,9 @@ class MinerCoordinator(DataUpdateCoordinator):
                     "board_hashrate": board.hashrate,
                 }
                 for board in miner_data.hashboards
+            },
+            "fan_sensors": {
+                idx: {"fan_speed": fan.speed} for idx, fan in enumerate(miner_data.fans)
             },
         }
         return data

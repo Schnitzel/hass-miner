@@ -1,4 +1,4 @@
-"""Support for IoTaWatt Energy monitor."""
+"""Support for Bitcoin ASIC miners."""
 from __future__ import annotations
 
 import logging
