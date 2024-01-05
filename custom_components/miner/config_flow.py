@@ -30,20 +30,13 @@ async def validate_input(data: dict[str, str]) -> dict[str, str]:
     miner_username = data.get(CONF_USERNAME)
     miner_password = data.get(CONF_PASSWORD)
 
-    try:
-        miner = await pyasic.get_miner(miner_ip)
-        if miner is None:
-            return {"base": "Unable to connect to Miner, is IP correct?"}
+    miner = await pyasic.get_miner(miner_ip)
+    if miner is None:
+        return {"base": "Unable to connect to Miner, is IP correct?"}
 
-        miner.username = miner_username
-        miner.pwd = miner_password
-        await miner.get_data(include=["mac"])
-
-    except Exception as e:  # pylint: disable=broad-except
-        _LOGGER.error(f"Miner setup error: {e}")
-        return {
-            "base": "Unable to authenticate with Miner, is Username & Password correct?"
-        }
+    miner.username = miner_username
+    miner.pwd = miner_password
+    await miner.get_data(include=["mac"])
 
     return {}
 
