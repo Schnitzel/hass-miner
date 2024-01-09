@@ -3,17 +3,14 @@ import logging
 
 import pyasic
 import voluptuous as vol
-from homeassistant import config_entries
-from homeassistant import exceptions
-from homeassistant.helpers.selector import TextSelector
-from homeassistant.helpers.selector import TextSelectorConfig
-from homeassistant.helpers.selector import TextSelectorType
+from homeassistant import config_entries, exceptions
+from homeassistant.helpers.selector import (
+    TextSelector,
+    TextSelectorConfig,
+    TextSelectorType,
+)
 
-from .const import CONF_IP
-from .const import CONF_PASSWORD
-from .const import CONF_TITLE
-from .const import CONF_USERNAME
-from .const import DOMAIN
+from .const import CONF_IP, CONF_PASSWORD, CONF_TITLE, CONF_USERNAME, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -33,20 +30,13 @@ async def validate_input(data: dict[str, str]) -> dict[str, str]:
     miner_username = data.get(CONF_USERNAME)
     miner_password = data.get(CONF_PASSWORD)
 
-    try:
-        miner = await pyasic.get_miner(miner_ip)
-        if miner is None:
-            return {"base": "Unable to connect to Miner, is IP correct?"}
+    miner = await pyasic.get_miner(miner_ip)
+    if miner is None:
+        return {"base": "Unable to connect to Miner, is IP correct?"}
 
-        miner.username = miner_username
-        miner.pwd = miner_password
-        await miner.get_data()
-
-    except Exception as e:  # pylint: disable=broad-except
-        _LOGGER.error(f"Miner setup error: {e}")
-        return {
-            "base": "Unable to authenticate with Miner, is Username & Password correct?"
-        }
+    miner.username = miner_username
+    miner.pwd = miner_password
+    await miner.get_data(include=["mac"])
 
     return {}
 

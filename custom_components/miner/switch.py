@@ -8,15 +8,12 @@ from dataclasses import dataclass
 from homeassistant.components.sensor import SensorEntityDescription
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import callback
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import (
-    DOMAIN,
-)
+from .const import DOMAIN
 from .coordinator import MinerCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -26,7 +23,7 @@ _LOGGER = logging.getLogger(__name__)
 class MinerSensorEntityDescription(SensorEntityDescription):
     """Class describing IotaWatt sensor entities."""
 
-    value: Callable | None = None
+    value: Callable = None
 
 
 async def async_setup_entry(
@@ -39,18 +36,19 @@ async def async_setup_entry(
     created = set()
 
     @callback
-    def _create_entity(key: str) -> SwitchEntity:
+    def _create_entity(key: str):
         """Create a sensor entity."""
         created.add(key)
 
     await coordinator.async_config_entry_first_refresh()
-    async_add_entities(
-        [
-            MinerActiveSwitch(
-                coordinator=coordinator,
-            )
-        ]
-    )
+    if coordinator.miner.supports_shutdown:
+        async_add_entities(
+            [
+                MinerActiveSwitch(
+                    coordinator=coordinator,
+                )
+            ]
+        )
 
     # @callback
     # def new_data_received():
