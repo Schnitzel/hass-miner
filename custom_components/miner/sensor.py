@@ -51,61 +51,51 @@ ENTITY_DESCRIPTION_KEY_MAP: dict[
         "Temperature",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         state_class=SensorStateClass.MEASUREMENT,
-        device_class=SensorDeviceClass.TEMPERATURE,
     ),
     "board_temperature": MinerSensorEntityDescription(
         "Board Temperature",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         state_class=SensorStateClass.MEASUREMENT,
-        device_class=SensorDeviceClass.TEMPERATURE,
     ),
     "chip_temperature": MinerSensorEntityDescription(
         "Chip Temperature",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         state_class=SensorStateClass.MEASUREMENT,
-        device_class=SensorDeviceClass.TEMPERATURE,
     ),
     "hashrate": MinerSensorEntityDescription(
         "Hashrate",
         native_unit_of_measurement=TERA_HASH_PER_SECOND,
         state_class=SensorStateClass.MEASUREMENT,
-        device_class=DEVICE_CLASS_HASHRATE,
     ),
     "ideal_hashrate": MinerSensorEntityDescription(
         "Ideal Hashrate",
         native_unit_of_measurement=TERA_HASH_PER_SECOND,
         state_class=SensorStateClass.MEASUREMENT,
-        device_class=DEVICE_CLASS_HASHRATE,
     ),
     "board_hashrate": MinerSensorEntityDescription(
         "Board Hashrate",
         native_unit_of_measurement=TERA_HASH_PER_SECOND,
         state_class=SensorStateClass.MEASUREMENT,
-        device_class=DEVICE_CLASS_HASHRATE,
     ),
     "power_limit": MinerSensorEntityDescription(
         "Power Limit",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfPower.WATT,
-        device_class=SensorDeviceClass.POWER,
     ),
     "miner_consumption": MinerSensorEntityDescription(
         "Miner Consumption",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfPower.WATT,
-        device_class=SensorDeviceClass.POWER,
     ),
     "efficiency": MinerSensorEntityDescription(
         "Efficiency",
         native_unit_of_measurement=JOULES_PER_TERA_HASH,
         state_class=SensorStateClass.MEASUREMENT,
-        device_class=DEVICE_CLASS_EFFICIENCY,
     ),
     "fan_speed": MinerSensorEntityDescription(
         "Fan Speed",
         native_unit_of_measurement=REVOLUTIONS_PER_MINUTE,
         state_class=SensorStateClass.MEASUREMENT,
-        device_class=SensorDeviceClass.SPEED
     )
 }
 
@@ -176,36 +166,6 @@ async def async_setup_entry(
         )
     if sensors:
         async_add_entities(sensors)
-
-    @callback
-    def new_data_received():
-        """Check for new sensors."""
-        new_sensors = []
-        new_sensors.extend(
-            _create_miner_entity(key)
-            for key in coordinator.data["miner_sensors"]
-            if key not in sensor_created
-        )
-
-        if coordinator.data["board_sensors"]:
-            for new_board in coordinator.data["board_sensors"]:
-                new_sensors.extend(
-                    _create_board_entity(new_board, sensor)
-                    for sensor in coordinator.data["board_sensors"][new_board]
-                    if f"{new_board}-{sensor}" not in sensor_created
-                )
-        if coordinator.data["fan_sensors"]:
-            for new_fan in coordinator.data["fan_sensors"]:
-                new_sensors.extend(
-                    _create_fan_entity(new_fan, sensor)
-                    for sensor in coordinator.data["fan_sensors"][new_fan]
-                    if f"{new_fan}-{sensor}" not in sensor_created
-                )
-
-        if new_sensors:
-            async_add_entities(new_sensors)
-
-    coordinator.async_add_listener(new_data_received)
 
 
 class MinerSensor(CoordinatorEntity[MinerCoordinator], SensorEntity):

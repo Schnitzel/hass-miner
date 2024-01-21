@@ -8,7 +8,14 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.debounce import Debouncer
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .const import CONF_IP, CONF_PASSWORD, CONF_USERNAME
+from .const import (
+    CONF_IP,
+    CONF_RPC_PASSWORD,
+    CONF_WEB_USERNAME,
+    CONF_WEB_PASSWORD,
+    CONF_SSH_USERNAME,
+    CONF_SSH_PASSWORD,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -41,14 +48,21 @@ class MinerCoordinator(DataUpdateCoordinator):
         """Fetch sensors from miners."""
 
         miner_ip = self.entry.data[CONF_IP]
-        miner_username = self.entry.data[CONF_USERNAME]
-        miner_password = self.entry.data[CONF_PASSWORD]
 
         try:
             if self.miner is None:
                 self.miner = await pyasic.get_miner(miner_ip)
-                self.miner.username = miner_username
-                self.miner.pwd = miner_password
+                if self.miner.rpc is not None:
+                    if self.miner.rpc.pwd is not None:
+                        self.miner.rpc.pwd = self.entry.data.get(CONF_RPC_PASSWORD, "")
+
+                if self.miner.web is not None:
+                    self.miner.web.username = self.entry.data.get(CONF_WEB_USERNAME, "")
+                    self.miner.web.pwd = self.entry.data.get(CONF_WEB_PASSWORD, "")
+
+                if self.miner.ssh is not None:
+                    self.miner.ssh.username = self.entry.data.get(CONF_SSH_USERNAME, "")
+                    self.miner.ssh.pwd = self.entry.data.get(CONF_SSH_PASSWORD, "")
 
             miner_data = await self.miner.get_data(
                 include=[

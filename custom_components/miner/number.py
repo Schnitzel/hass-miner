@@ -117,34 +117,7 @@ class MinerPowerLimitNumber(CoordinatorEntity[MinerCoordinator], NumberEntity):
                 f"{self.coordinator.entry.title} does not support setting power limit."
             )
 
-        if isinstance(miner, BOSMiner):
-            max_diff = 500
-            try:
-                try:
-                    current_value = self._attr_native_value
-                    diff = int(value) - int(current_value)
-                    smooth_tune = -max_diff < diff < max_diff
-
-                    if smooth_tune:
-                        if diff < 0:
-                            result = await miner.web.grpc.decrement_power_target(
-                                abs(diff)
-                            )
-                        else:
-                            result = await miner.web.grpc.increment_power_target(
-                                abs(diff)
-                            )
-                    else:
-                        result = await miner.web.grpc.set_power_target(int(value))
-                except TypeError:
-                    result = await miner.web.grpc.set_power_target(int(value))
-            except pyasic.APIError:
-                result = await miner.set_power_limit(int(value))
-
-        else:
-            result = await miner.set_power_limit(
-                int(value)
-            )  # noqa: ignore miner being assumed to be None
+        result = await miner.set_power_limit(int(value))
 
         if not result:
             raise pyasic.APIError("Failed to set wattage.")

@@ -1,4 +1,4 @@
-"""Support for IoTaWatt Energy monitor."""
+"""Support for Miner shutdown."""
 from __future__ import annotations
 
 import logging
@@ -21,7 +21,7 @@ _LOGGER = logging.getLogger(__name__)
 
 @dataclass
 class MinerSensorEntityDescription(SensorEntityDescription):
-    """Class describing IotaWatt sensor entities."""
+    """Class describing Miner sensor entities."""
 
     value: Callable = None
 
@@ -49,17 +49,6 @@ async def async_setup_entry(
                 )
             ]
         )
-
-    # @callback
-    # def new_data_received():
-    #     """Check for new sensors."""
-    #     entities = [
-    #         _create_entity(key) for key in coordinator.data if key not in created
-    #     ]
-    #     if entities:
-    #         async_add_entities(entities)
-
-    # coordinator.async_add_listener(new_data_received)
 
 
 class MinerActiveSwitch(CoordinatorEntity[MinerCoordinator], SwitchEntity):
