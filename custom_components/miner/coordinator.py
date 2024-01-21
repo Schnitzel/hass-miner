@@ -11,10 +11,10 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 from .const import (
     CONF_IP,
     CONF_RPC_PASSWORD,
-    CONF_WEB_USERNAME,
-    CONF_WEB_PASSWORD,
-    CONF_SSH_USERNAME,
     CONF_SSH_PASSWORD,
+    CONF_SSH_USERNAME,
+    CONF_WEB_PASSWORD,
+    CONF_WEB_USERNAME,
 )
 
 _LOGGER = logging.getLogger(__name__)

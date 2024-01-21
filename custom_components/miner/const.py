@@ -9,7 +9,5 @@ CONF_RPC_PASSWORD = "rpc_password"
 CONF_WEB_PASSWORD = "web_password"
 CONF_WEB_USERNAME = "web_username"
 
-DEVICE_CLASS_HASHRATE = "hashrate"
-DEVICE_CLASS_EFFICIENCY = "efficiency"
 TERA_HASH_PER_SECOND = "TH/s"
 JOULES_PER_TERA_HASH = "J/TH"

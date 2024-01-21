@@ -13,13 +13,13 @@ from homeassistant.helpers.selector import (
 
 from .const import (
     CONF_IP,
-    CONF_TITLE,
-    DOMAIN,
-    CONF_WEB_USERNAME,
-    CONF_SSH_USERNAME,
-    CONF_WEB_PASSWORD,
-    CONF_SSH_PASSWORD,
     CONF_RPC_PASSWORD,
+    CONF_SSH_PASSWORD,
+    CONF_SSH_USERNAME,
+    CONF_TITLE,
+    CONF_WEB_PASSWORD,
+    CONF_WEB_USERNAME,
+    DOMAIN,
 )
 
 _LOGGER = logging.getLogger(__name__)
