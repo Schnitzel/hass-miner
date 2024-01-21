@@ -7,12 +7,20 @@
     "step": {
       "user": {
         "data": {
-          "ip": "IP Address",
+          "ip": "IP Address"
+        }
+      },
+      "login": {
+        "data": {
           "ssh_username": "SSH Username",
           "ssh_password": "SSH Password",
           "rpc_password": "RPC API Password",
           "web_username": "Web Username",
-          "web_password": "Web Password",
+          "web_password": "Web Password"
+        }
+      },
+      "title": {
+        "data": {
           "title": "Title"
         }
       }
