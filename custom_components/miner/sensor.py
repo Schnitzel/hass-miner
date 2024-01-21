@@ -4,6 +4,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Callable
 from dataclasses import dataclass
+from typing import Union
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -96,7 +97,7 @@ ENTITY_DESCRIPTION_KEY_MAP: dict[
         "Fan Speed",
         native_unit_of_measurement=REVOLUTIONS_PER_MINUTE,
         state_class=SensorStateClass.MEASUREMENT,
-    )
+    ),
 }
 
 
@@ -107,23 +108,20 @@ async def async_setup_entry(
 ) -> None:
     """Add sensors for passed config_entry in HA."""
     coordinator: MinerCoordinator = hass.data[DOMAIN][config_entry.entry_id]
-    sensor_created = set()
 
-    @callback
-    def _create_miner_entity(key: str) -> MinerSensor:
+    def _create_miner_entity(sensor: str) -> MinerSensor:
         """Create a miner sensor entity."""
-        sensor_created.add(key)
         description = ENTITY_DESCRIPTION_KEY_MAP.get(
-            key, MinerSensorEntityDescription("base_sensor")
+            sensor, MinerSensorEntityDescription("base_sensor")
         )
         return MinerSensor(
-            coordinator=coordinator, key=key, entity_description=description
+            coordinator=coordinator,
+            sensor=sensor,
+            entity_description=description,
         )
 
-    @callback
     def _create_board_entity(board_num: int, sensor: str) -> MinerBoardSensor:
         """Create a board sensor entity."""
-        sensor_created.add(f"board_{board_num}-{sensor}")
         description = ENTITY_DESCRIPTION_KEY_MAP.get(
             sensor, MinerSensorEntityDescription("base_sensor")
         )
@@ -134,10 +132,8 @@ async def async_setup_entry(
             entity_description=description,
         )
 
-    @callback
     def _create_fan_entity(fan_num: int, sensor: str) -> MinerFanSensor:
         """Create a fan sensor entity."""
-        sensor_created.add(f"fan_{fan_num}-{sensor}")
         description = ENTITY_DESCRIPTION_KEY_MAP.get(
             sensor, MinerSensorEntityDescription("base_sensor")
         )
@@ -151,21 +147,15 @@ async def async_setup_entry(
     await coordinator.async_config_entry_first_refresh()
 
     sensors = []
-    sensors.extend(
-        _create_miner_entity(key) for key in coordinator.data["miner_sensors"]
-    )
+    for s in coordinator.data["miner_sensors"]:
+        sensors.append(_create_miner_entity(s))
     for board in range(coordinator.miner.expected_hashboards):
-        sensors.extend(
-            _create_board_entity(board, sensor)
-            for sensor in ["board_temperature", "chip_temperature", "board_hashrate"]
-        )
+        for s in ["board_temperature", "chip_temperature", "board_hashrate"]:
+            sensors.append(_create_board_entity(board, s))
     for fan in range(coordinator.miner.fan_count):
-        sensors.extend(
-            _create_fan_entity(fan, sensor)
-            for sensor in ["fan_speed"]
-        )
-    if sensors:
-        async_add_entities(sensors)
+        for s in ["fan_speed"]:
+            sensors.append(_create_fan_entity(fan, s))
+    async_add_entities(sensors)
 
 
 class MinerSensor(CoordinatorEntity[MinerCoordinator], SensorEntity):
@@ -176,20 +166,20 @@ class MinerSensor(CoordinatorEntity[MinerCoordinator], SensorEntity):
     def __init__(
         self,
         coordinator: MinerCoordinator,
-        key: str,
+        sensor: str,
         entity_description: MinerSensorEntityDescription,
     ) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator=coordinator)
-        self._attr_unique_id = f"{self.coordinator.data['mac']}-{key}"
-        self._key = key
+        self._attr_unique_id = f"{self.coordinator.data['mac']}-{sensor}"
+        self._sensor = sensor
         self.entity_description = entity_description
         self._attr_force_update = True
 
     @property
     def _sensor_data(self):
         """Return sensor data."""
-        return self.coordinator.data["miner_sensors"][self._key]
+        return self.coordinator.data["miner_sensors"][self._sensor]
 
     @property
     def name(self) -> str | None:
