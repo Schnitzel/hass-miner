@@ -149,7 +149,7 @@ class MinerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         schema = vol.Schema(schema_data)
         if not user_input:
-            return self.async_show_form(step_id="user", data_schema=schema)
+            return self.async_show_form(step_id="login", data_schema=schema)
 
         self._data.update(user_input)
         return await self.async_step_title()
