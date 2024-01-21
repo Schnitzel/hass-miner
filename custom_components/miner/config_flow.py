@@ -92,7 +92,12 @@ class MinerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 schema_data[
                     vol.Optional(
                         CONF_RPC_PASSWORD,
-                        default=user_input.get(CONF_RPC_PASSWORD, self._miner.api.pwd),
+                        default=user_input.get(
+                            CONF_RPC_PASSWORD,
+                            self._miner.web.pwd
+                            if self._miner.api.pwd is not None
+                            else "",
+                        ),
                     )
                 ] = TextSelector(
                     TextSelectorConfig(
@@ -110,7 +115,10 @@ class MinerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             schema_data[
                 vol.Optional(
                     CONF_WEB_PASSWORD,
-                    default=user_input.get(CONF_WEB_PASSWORD, self._miner.web.pwd),
+                    default=user_input.get(
+                        CONF_WEB_PASSWORD,
+                        self._miner.web.pwd if self._miner.web.pwd is not None else "",
+                    ),
                 )
             ] = TextSelector(
                 TextSelectorConfig(
@@ -128,7 +136,10 @@ class MinerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             schema_data[
                 vol.Optional(
                     CONF_SSH_PASSWORD,
-                    default=user_input.get(CONF_SSH_PASSWORD, self._miner.ssh.pwd),
+                    default=user_input.get(
+                        CONF_SSH_PASSWORD,
+                        self._miner.ssh.pwd if self._miner.ssh.pwd is not None else "",
+                    ),
                 )
             ] = TextSelector(
                 TextSelectorConfig(
