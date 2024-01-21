@@ -90,7 +90,7 @@ class MinerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if self._miner.api is not None:
             if self._miner.api.pwd is not None:
                 schema_data[
-                    vol.Required(
+                    vol.Optional(
                         CONF_RPC_PASSWORD,
                         default=user_input.get(CONF_RPC_PASSWORD, self._miner.api.pwd),
                     )
@@ -108,7 +108,7 @@ class MinerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 )
             ] = str
             schema_data[
-                vol.Required(
+                vol.Optional(
                     CONF_WEB_PASSWORD,
                     default=user_input.get(CONF_WEB_PASSWORD, self._miner.web.pwd),
                 )
@@ -126,7 +126,7 @@ class MinerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 )
             ] = str
             schema_data[
-                vol.Required(
+                vol.Optional(
                     CONF_SSH_PASSWORD,
                     default=user_input.get(CONF_SSH_PASSWORD, self._miner.ssh.pwd),
                 )
