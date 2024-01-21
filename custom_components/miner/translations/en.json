@@ -11,8 +11,11 @@
       "user": {
         "data": {
           "ip": "IP Address",
-          "username": "Username",
-          "password": "Password"
+          "ssh_username": "SSH Username",
+          "ssh_password": "SSH Password",
+          "rpc_password": "RPC API Password",
+          "web_username": "Web Username",
+          "web_password": "Web Password"
         }
       },
       "hostname": {
