@@ -7,20 +7,12 @@
     "step": {
       "user": {
         "data": {
-          "ip": "IP Address"
-        }
-      },
-      "login": {
-        "data": {
+          "ip": "IP Address",
           "ssh_username": "SSH Username",
           "ssh_password": "SSH Password",
           "rpc_password": "RPC API Password",
           "web_username": "Web Username",
-          "web_password": "Web Password"
-        }
-      },
-      "title": {
-        "data": {
+          "web_password": "Web Password",
           "title": "Title of miner to be used"
         }
       }
