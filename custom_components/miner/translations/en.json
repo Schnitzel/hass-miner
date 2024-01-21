@@ -13,7 +13,7 @@
           "rpc_password": "RPC API Password",
           "web_username": "Web Username",
           "web_password": "Web Password",
-          "title": "Title of miner to be used"
+          "title": "Title"
         }
       }
     }
