@@ -5,12 +5,13 @@
       "single_instance_allowed": "Already configured. Only a single configuration possible."
     },
     "step": {
-      "confirm": {
-        "description": "Do you want to start set up?"
-      },
       "user": {
         "data": {
-          "ip": "IP Address",
+          "ip": "IP Address"
+        }
+      },
+      "login": {
+        "data": {
           "ssh_username": "SSH Username",
           "ssh_password": "SSH Password",
           "rpc_password": "RPC API Password",
@@ -18,9 +19,9 @@
           "web_password": "Web Password"
         }
       },
-      "hostname": {
+      "title": {
         "data": {
-          "hostname": "Hostname of Miner to be used in HomeAssistant"
+          "title": "Title of miner to be used"
         }
       }
     }
