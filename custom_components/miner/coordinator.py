@@ -52,9 +52,9 @@ class MinerCoordinator(DataUpdateCoordinator):
         try:
             if self.miner is None:
                 self.miner = await pyasic.get_miner(miner_ip)
-                if self.miner.rpc is not None:
-                    if self.miner.rpc.pwd is not None:
-                        self.miner.rpc.pwd = self.entry.data.get(CONF_RPC_PASSWORD, "")
+                if self.miner.api is not None:
+                    if self.miner.api.pwd is not None:
+                        self.miner.api.pwd = self.entry.data.get(CONF_RPC_PASSWORD, "")
 
                 if self.miner.web is not None:
                     self.miner.web.username = self.entry.data.get(CONF_WEB_USERNAME, "")

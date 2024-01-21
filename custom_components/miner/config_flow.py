@@ -87,12 +87,12 @@ class MinerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         schema_data = {}
 
-        if self._miner.rpc is not None:
-            if self._miner.rpc.pwd is not None:
+        if self._miner.api is not None:
+            if self._miner.api.pwd is not None:
                 schema_data[
                     vol.Required(
                         CONF_RPC_PASSWORD,
-                        default=user_input.get(CONF_RPC_PASSWORD, self._miner.rpc.pwd),
+                        default=user_input.get(CONF_RPC_PASSWORD, self._miner.api.pwd),
                     )
                 ] = TextSelector(
                     TextSelectorConfig(
