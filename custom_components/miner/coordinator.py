@@ -44,25 +44,33 @@ class MinerCoordinator(DataUpdateCoordinator):
             ),
         )
 
+    @property
+    def available(self):
+        """Return if device is available or not."""
+        return self.miner is not None
+
     async def _async_update_data(self):
         """Fetch sensors from miners."""
 
         miner_ip = self.entry.data[CONF_IP]
+        if self.miner is None:
+            self.miner = await pyasic.get_miner(miner_ip)
+
+        if self.miner is None:
+            raise UpdateFailed("Miner Offline")
 
         try:
-            if self.miner is None:
-                self.miner = await pyasic.get_miner(miner_ip)
-                if self.miner.api is not None:
-                    if self.miner.api.pwd is not None:
-                        self.miner.api.pwd = self.entry.data.get(CONF_RPC_PASSWORD, "")
+            if self.miner.api is not None:
+                if self.miner.api.pwd is not None:
+                    self.miner.api.pwd = self.entry.data.get(CONF_RPC_PASSWORD, "")
 
-                if self.miner.web is not None:
-                    self.miner.web.username = self.entry.data.get(CONF_WEB_USERNAME, "")
-                    self.miner.web.pwd = self.entry.data.get(CONF_WEB_PASSWORD, "")
+            if self.miner.web is not None:
+                self.miner.web.username = self.entry.data.get(CONF_WEB_USERNAME, "")
+                self.miner.web.pwd = self.entry.data.get(CONF_WEB_PASSWORD, "")
 
-                if self.miner.ssh is not None:
-                    self.miner.ssh.username = self.entry.data.get(CONF_SSH_USERNAME, "")
-                    self.miner.ssh.pwd = self.entry.data.get(CONF_SSH_PASSWORD, "")
+            if self.miner.ssh is not None:
+                self.miner.ssh.username = self.entry.data.get(CONF_SSH_USERNAME, "")
+                self.miner.ssh.pwd = self.entry.data.get(CONF_SSH_PASSWORD, "")
 
             miner_data = await self.miner.get_data(
                 include=[
@@ -83,7 +91,7 @@ class MinerCoordinator(DataUpdateCoordinator):
             raise UpdateFailed("API Error") from err
 
         except Exception as err:
-            raise UpdateFailed("API Error") from err
+            raise UpdateFailed("Unknown Error") from err
 
         _LOGGER.debug(miner_data)
 
