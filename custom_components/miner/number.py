@@ -25,12 +25,6 @@ async def async_setup_entry(
 ) -> None:
     """Add sensors for passed config_entry in HA."""
     coordinator: MinerCoordinator = hass.data[DOMAIN][config_entry.entry_id]
-    created = set()
-
-    @callback
-    def _create_entity(key: str):
-        """Create a sensor entity."""
-        created.add(key)
 
     await coordinator.async_config_entry_first_refresh()
     if coordinator.miner.supports_autotuning:
@@ -109,12 +103,12 @@ class MinerPowerLimitNumber(CoordinatorEntity[MinerCoordinator], NumberEntity):
         miner = self.coordinator.miner
 
         _LOGGER.debug(
-            "%s: setting power limit to %s.", self.coordinator.entry.title, value
+            f"{self.coordinator.entry.title}: setting power limit to {value}."
         )
 
         if not miner.supports_autotuning:
             raise TypeError(
-                f"{self.coordinator.entry.title} does not support setting power limit."
+                f"{self.coordinator.entry.title}: Tuning not supported."
             )
 
         result = await miner.set_power_limit(int(value))

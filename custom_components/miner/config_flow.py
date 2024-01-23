@@ -26,7 +26,7 @@ _LOGGER = logging.getLogger(__name__)
 #     return len(devices) > 0
 
 
-# config_entry_flow.register_discovery_flow(DOMAIN, "Miner", _async_has_devices)
+# config_entry_flow.register_discovery_flow(DOMAIN, "miner", _async_has_devices)
 
 
 async def validate_ip_input(

@@ -56,6 +56,8 @@ class MinerCoordinator(DataUpdateCoordinator):
         if self.miner is None:
             self.miner = await pyasic.get_miner(miner_ip)
 
+        _LOGGER.debug(f"Found miner :{self.miner}")
+
         if self.miner is None:
             raise UpdateFailed("Miner Offline")
 
@@ -93,7 +95,7 @@ class MinerCoordinator(DataUpdateCoordinator):
         except Exception as err:
             raise UpdateFailed("Unknown Error") from err
 
-        _LOGGER.debug(miner_data)
+        _LOGGER.debug(f"Got data: {miner_data}")
 
         data = {
             "hostname": miner_data.hostname,

@@ -1,4 +1,4 @@
-"""Support for IoTaWatt Energy monitor."""
+"""Support for Miner sensors."""
 from __future__ import annotations
 
 import logging
@@ -33,62 +33,54 @@ class MinerSensorEntityDescription(SensorEntityDescription):
     value: Callable = None
 
 
-class MinerNumberEntityDescription(SensorEntityDescription):
-    """Class describing ASIC Miner number entities."""
-
-    value: Callable = None
-
-
-ENTITY_DESCRIPTION_KEY_MAP: dict[
-    str, MinerSensorEntityDescription or MinerNumberEntityDescription
-] = {
+ENTITY_DESCRIPTION_KEY_MAP: dict[str, MinerSensorEntityDescription] = {
     "temperature": MinerSensorEntityDescription(
-        "Temperature",
+        key="Temperature",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     "board_temperature": MinerSensorEntityDescription(
-        "Board Temperature",
+        key="Board Temperature",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     "chip_temperature": MinerSensorEntityDescription(
-        "Chip Temperature",
+        key="Chip Temperature",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     "hashrate": MinerSensorEntityDescription(
-        "Hashrate",
+        key="Hashrate",
         native_unit_of_measurement=TERA_HASH_PER_SECOND,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     "ideal_hashrate": MinerSensorEntityDescription(
-        "Ideal Hashrate",
+        key="Ideal Hashrate",
         native_unit_of_measurement=TERA_HASH_PER_SECOND,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     "board_hashrate": MinerSensorEntityDescription(
-        "Board Hashrate",
+        key="Board Hashrate",
         native_unit_of_measurement=TERA_HASH_PER_SECOND,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     "power_limit": MinerSensorEntityDescription(
-        "Power Limit",
+        key="Power Limit",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfPower.WATT,
     ),
     "miner_consumption": MinerSensorEntityDescription(
-        "Miner Consumption",
+        key="Miner Consumption",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfPower.WATT,
     ),
     "efficiency": MinerSensorEntityDescription(
-        "Efficiency",
+        key="Efficiency",
         native_unit_of_measurement=JOULES_PER_TERA_HASH,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     "fan_speed": MinerSensorEntityDescription(
-        "Fan Speed",
+        key="Fan Speed",
         native_unit_of_measurement=REVOLUTIONS_PER_MINUTE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
@@ -168,12 +160,14 @@ class MinerSensor(CoordinatorEntity[MinerCoordinator], SensorEntity):
         self._attr_unique_id = f"{self.coordinator.data['mac']}-{sensor}"
         self._sensor = sensor
         self.entity_description = entity_description
-        self._attr_force_update = True
 
     @property
     def _sensor_data(self):
         """Return sensor data."""
-        return self.coordinator.data["miner_sensors"][self._sensor]
+        try:
+            return self.coordinator.data["miner_sensors"][self._sensor]
+        except LookupError:
+            return None
 
     @property
     def name(self) -> str | None:
@@ -220,17 +214,13 @@ class MinerBoardSensor(CoordinatorEntity[MinerCoordinator], SensorEntity):
         self._board_num = board_num
         self._sensor = sensor
         self.entity_description = entity_description
-        self._attr_force_update = True
 
     @property
     def _sensor_data(self):
         """Return sensor data."""
-        if (
-            self._board_num in self.coordinator.data["board_sensors"]
-            and self._sensor in self.coordinator.data["board_sensors"][self._board_num]
-        ):
+        try:
             return self.coordinator.data["board_sensors"][self._board_num][self._sensor]
-        else:
+        except LookupError:
             return None
 
     @property
@@ -283,12 +273,9 @@ class MinerFanSensor(CoordinatorEntity[MinerCoordinator], SensorEntity):
     @property
     def _sensor_data(self):
         """Return sensor data."""
-        if (
-            self._fan_num in self.coordinator.data["fan_sensors"]
-            and self._sensor in self.coordinator.data["fan_sensors"][self._fan_num]
-        ):
+        try:
             return self.coordinator.data["fan_sensors"][self._fan_num][self._sensor]
-        else:
+        except LookupError:
             return None
 
     @property
