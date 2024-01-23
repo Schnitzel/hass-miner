@@ -1,26 +1,21 @@
 """Config flow for Miner."""
 import logging
-from typing import Optional
 
 import pyasic
 import voluptuous as vol
-from homeassistant import config_entries, exceptions
-from homeassistant.helpers.selector import (
-    TextSelector,
-    TextSelectorConfig,
-    TextSelectorType,
-)
+from homeassistant import config_entries
+from homeassistant.helpers.selector import TextSelector
+from homeassistant.helpers.selector import TextSelectorConfig
+from homeassistant.helpers.selector import TextSelectorType
 
-from .const import (
-    CONF_IP,
-    CONF_RPC_PASSWORD,
-    CONF_SSH_PASSWORD,
-    CONF_SSH_USERNAME,
-    CONF_TITLE,
-    CONF_WEB_PASSWORD,
-    CONF_WEB_USERNAME,
-    DOMAIN,
-)
+from .const import CONF_IP
+from .const import CONF_RPC_PASSWORD
+from .const import CONF_SSH_PASSWORD
+from .const import CONF_SSH_USERNAME
+from .const import CONF_TITLE
+from .const import CONF_WEB_PASSWORD
+from .const import CONF_WEB_USERNAME
+from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -36,7 +31,7 @@ _LOGGER = logging.getLogger(__name__)
 
 async def validate_ip_input(
     data: dict[str, str]
-) -> tuple[dict[str, str], Optional[pyasic.AnyMiner]]:
+) -> tuple[dict[str, str], pyasic.AnyMiner | None]:
     """Validate the user input allows us to connect."""
     miner_ip = data.get(CONF_IP)
 

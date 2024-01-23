@@ -5,20 +5,22 @@ import logging
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from homeassistant.components.sensor import (
-    SensorEntity,
-    SensorEntityDescription,
-    SensorStateClass,
-)
+from homeassistant.components.sensor import SensorEntity
+from homeassistant.components.sensor import SensorEntityDescription
+from homeassistant.components.sensor import SensorStateClass
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import REVOLUTIONS_PER_MINUTE, UnitOfPower, UnitOfTemperature
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.const import REVOLUTIONS_PER_MINUTE
+from homeassistant.const import UnitOfPower
+from homeassistant.const import UnitOfTemperature
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import StateType
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN, JOULES_PER_TERA_HASH, TERA_HASH_PER_SECOND
+from .const import DOMAIN
+from .const import JOULES_PER_TERA_HASH
+from .const import TERA_HASH_PER_SECOND
 from .coordinator import MinerCoordinator
 
 _LOGGER = logging.getLogger(__name__)
