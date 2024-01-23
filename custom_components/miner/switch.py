@@ -8,7 +8,8 @@ from dataclasses import dataclass
 from homeassistant.components.sensor import SensorEntityDescription
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import callback
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -106,3 +107,8 @@ class MinerActiveSwitch(CoordinatorEntity[MinerCoordinator], SwitchEntity):
             self._attr_is_on = self.coordinator.data["is_mining"]
 
         super()._handle_coordinator_update()
+
+    @property
+    def available(self) -> bool:
+        """Return if entity is available or not."""
+        return self.coordinator.available

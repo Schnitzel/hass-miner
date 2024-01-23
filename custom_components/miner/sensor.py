@@ -196,6 +196,11 @@ class MinerSensor(CoordinatorEntity[MinerCoordinator], SensorEntity):
         """Return the state of the sensor."""
         return self._sensor_data
 
+    @property
+    def available(self) -> bool:
+        """Return if entity is available or not."""
+        return self.coordinator.available
+
 
 class MinerBoardSensor(CoordinatorEntity[MinerCoordinator], SensorEntity):
     """Defines a Miner Board Sensor."""
@@ -249,6 +254,11 @@ class MinerBoardSensor(CoordinatorEntity[MinerCoordinator], SensorEntity):
         """Return the state of the sensor."""
         return self._sensor_data
 
+    @property
+    def available(self) -> bool:
+        """Return if entity is available or not."""
+        return self.coordinator.available
+
 
 class MinerFanSensor(CoordinatorEntity[MinerCoordinator], SensorEntity):
     """Defines a Miner Fan Sensor."""
@@ -301,3 +311,8 @@ class MinerFanSensor(CoordinatorEntity[MinerCoordinator], SensorEntity):
     def native_value(self) -> StateType:
         """Return the state of the sensor."""
         return self._sensor_data
+
+    @property
+    def available(self) -> bool:
+        """Return if entity is available or not."""
+        return self.coordinator.available
