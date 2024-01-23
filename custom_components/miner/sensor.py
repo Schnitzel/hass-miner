@@ -189,12 +189,6 @@ class MinerSensor(CoordinatorEntity[MinerCoordinator], SensorEntity):
             name=f"{self.coordinator.entry.title}",
         )
 
-    @callback
-    def _handle_coordinator_update(self) -> None:
-        """Handle updated data from the coordinator."""
-
-        super()._handle_coordinator_update()
-
     @property
     def native_value(self) -> StateType:
         """Return the state of the sensor."""
@@ -248,12 +242,6 @@ class MinerBoardSensor(CoordinatorEntity[MinerCoordinator], SensorEntity):
             name=f"{self.coordinator.entry.title}",
         )
 
-    @callback
-    def _handle_coordinator_update(self) -> None:
-        """Handle updated data from the coordinator."""
-
-        super()._handle_coordinator_update()
-
     @property
     def native_value(self) -> StateType:
         """Return the state of the sensor."""
@@ -306,12 +294,6 @@ class MinerFanSensor(CoordinatorEntity[MinerCoordinator], SensorEntity):
             sw_version=self.coordinator.data["fw_ver"],
             name=f"{self.coordinator.entry.title}",
         )
-
-    @callback
-    def _handle_coordinator_update(self) -> None:
-        """Handle updated data from the coordinator."""
-
-        super()._handle_coordinator_update()
 
     @property
     def native_value(self) -> StateType:
