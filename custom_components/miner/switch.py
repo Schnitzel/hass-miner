@@ -1,4 +1,4 @@
-"""Support for IoTaWatt Energy monitor."""
+"""Support for Miner shutdown."""
 from __future__ import annotations
 
 import logging
@@ -8,7 +8,8 @@ from dataclasses import dataclass
 from homeassistant.components.sensor import SensorEntityDescription
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import callback
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -21,7 +22,7 @@ _LOGGER = logging.getLogger(__name__)
 
 @dataclass
 class MinerSensorEntityDescription(SensorEntityDescription):
-    """Class describing IotaWatt sensor entities."""
+    """Class describing Miner sensor entities."""
 
     value: Callable = None
 
@@ -49,17 +50,6 @@ async def async_setup_entry(
                 )
             ]
         )
-
-    # @callback
-    # def new_data_received():
-    #     """Check for new sensors."""
-    #     entities = [
-    #         _create_entity(key) for key in coordinator.data if key not in created
-    #     ]
-    #     if entities:
-    #         async_add_entities(entities)
-
-    # coordinator.async_add_listener(new_data_received)
 
 
 class MinerActiveSwitch(CoordinatorEntity[MinerCoordinator], SwitchEntity):
@@ -93,9 +83,9 @@ class MinerActiveSwitch(CoordinatorEntity[MinerCoordinator], SwitchEntity):
     async def async_turn_on(self) -> None:
         """Turn on miner."""
         miner = self.coordinator.miner
-        _LOGGER.debug("%s: Resume mining.", self.coordinator.entry.title)
+        _LOGGER.debug(f"{self.coordinator.entry.title}: Resume mining.")
         if not miner.supports_shutdown:
-            raise TypeError(f"{miner} does not support shutdown mode.")
+            raise TypeError(f"{miner}: Shutdown not supported.")
         self._attr_is_on = True
         await miner.resume_mining()
         self.async_write_ha_state()
@@ -103,9 +93,9 @@ class MinerActiveSwitch(CoordinatorEntity[MinerCoordinator], SwitchEntity):
     async def async_turn_off(self) -> None:
         """Turn off miner."""
         miner = self.coordinator.miner
-        _LOGGER.debug("%s: Stop mining.", self.coordinator.entry.title)
+        _LOGGER.debug(f"{self.coordinator.entry.title}: Stop mining.")
         if not miner.supports_shutdown:
-            raise TypeError(f"{miner} does not support shutdown mode.")
+            raise TypeError(f"{miner}: Shutdown not supported.")
         self._attr_is_on = False
         await miner.stop_mining()
         self.async_write_ha_state()
@@ -117,3 +107,8 @@ class MinerActiveSwitch(CoordinatorEntity[MinerCoordinator], SwitchEntity):
             self._attr_is_on = self.coordinator.data["is_mining"]
 
         super()._handle_coordinator_update()
+
+    @property
+    def available(self) -> bool:
+        """Return if entity is available or not."""
+        return self.coordinator.available

@@ -3,14 +3,21 @@
     "step": {
       "user": {
         "data": {
-          "ip": "[%key:common::config_flow::data::ip%]",
-          "username": "[%key:common::config_flow::data::username%]",
-          "password": "[%key:common::config_flow::data::password%]"
+          "ip": "[%key:common::config_flow::data::ip%]"
         }
       },
-      "hostname": {
+      "login": {
         "data": {
-          "hostname": "[%key:common::config_flow::data::hostname%]"
+          "ssh_username": "[%key:common::config_flow::data::ssh_username%]",
+          "ssh_password": "[%key:common::config_flow::data::ssh_password%]",
+          "rpc_password": "[%key:common::config_flow::data::rpc_password%]",
+          "web_username": "[%key:common::config_flow::data::web_username%]",
+          "web_password": "[%key:common::config_flow::data::web_password%]"
+        }
+      },
+      "title": {
+        "data": {
+          "title": "[%key:common::config_flow::data::title%]"
         }
       }
     },

@@ -1,20 +1,26 @@
 """The Miner integration."""
 from __future__ import annotations
 
+import pyasic
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ConfigEntryNotReady
 
-from .const import DOMAIN
+from .const import DOMAIN, CONF_IP
 from .coordinator import MinerCoordinator
 
-# TODO List the platforms that you want to support.
-# For your initial PR, limit it to 1 platform.
 PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.SWITCH, Platform.NUMBER]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Miner from a config entry."""
+
+    miner_ip = entry.data[CONF_IP]
+    miner = await pyasic.get_miner(miner_ip)
+
+    if miner is None:
+        raise ConfigEntryNotReady("Miner could not be found.")
 
     m_coordinator = MinerCoordinator(hass, entry)
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = m_coordinator

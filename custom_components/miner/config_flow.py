@@ -3,14 +3,19 @@ import logging
 
 import pyasic
 import voluptuous as vol
-from homeassistant import config_entries, exceptions
-from homeassistant.helpers.selector import (
-    TextSelector,
-    TextSelectorConfig,
-    TextSelectorType,
-)
+from homeassistant import config_entries
+from homeassistant.helpers.selector import TextSelector
+from homeassistant.helpers.selector import TextSelectorConfig
+from homeassistant.helpers.selector import TextSelectorType
 
-from .const import CONF_IP, CONF_PASSWORD, CONF_TITLE, CONF_USERNAME, DOMAIN
+from .const import CONF_IP
+from .const import CONF_RPC_PASSWORD
+from .const import CONF_SSH_PASSWORD
+from .const import CONF_SSH_USERNAME
+from .const import CONF_TITLE
+from .const import CONF_WEB_PASSWORD
+from .const import CONF_WEB_USERNAME
+from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -21,24 +26,20 @@ _LOGGER = logging.getLogger(__name__)
 #     return len(devices) > 0
 
 
-# config_entry_flow.register_discovery_flow(DOMAIN, "Miner", _async_has_devices)
+# config_entry_flow.register_discovery_flow(DOMAIN, "miner", _async_has_devices)
 
 
-async def validate_input(data: dict[str, str]) -> dict[str, str]:
+async def validate_ip_input(
+    data: dict[str, str]
+) -> tuple[dict[str, str], pyasic.AnyMiner | None]:
     """Validate the user input allows us to connect."""
     miner_ip = data.get(CONF_IP)
-    miner_username = data.get(CONF_USERNAME)
-    miner_password = data.get(CONF_PASSWORD)
 
     miner = await pyasic.get_miner(miner_ip)
     if miner is None:
-        return {"base": "Unable to connect to Miner, is IP correct?"}
+        return {"base": "Unable to connect to Miner, is IP correct?"}, None
 
-    miner.username = miner_username
-    miner.pwd = miner_password
-    await miner.get_data(include=["mac"])
-
-    return {}
+    return {}, miner
 
 
 class MinerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -49,44 +50,108 @@ class MinerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     def __init__(self):
         """Initialize."""
         self._data = {}
+        self._miner = None
 
     async def async_step_user(self, user_input=None):
-        """Handle the initial step."""
+        """Get miner IP and check if it is available."""
         if user_input is None:
             user_input = {}
 
         schema = vol.Schema(
-            {
-                vol.Required(CONF_IP, default=user_input.get(CONF_IP, "")): str,
-                vol.Required(
-                    CONF_USERNAME, default=user_input.get(CONF_USERNAME, "root")
-                ): str,
-                vol.Optional(
-                    CONF_PASSWORD, default=user_input.get(CONF_PASSWORD, "")
-                ): TextSelector(
-                    TextSelectorConfig(
-                        type=TextSelectorType.PASSWORD, autocomplete="current-password"
-                    )
-                ),
-            }
+            {vol.Required(CONF_IP, default=user_input.get(CONF_IP, "")): str}
         )
+
         if not user_input:
             return self.async_show_form(step_id="user", data_schema=schema)
 
-        errors = await validate_input(user_input)
+        errors, miner = await validate_ip_input(user_input)
 
-        if not errors:
-            self._data.update(user_input)
-            return await self.async_step_title()
+        if errors:
+            return self.async_show_form(
+                step_id="user", data_schema=schema, errors=errors
+            )
 
-        return self.async_show_form(step_id="user", data_schema=schema, errors=errors)
+        self._miner = miner
+        self._data.update(user_input)
+        return await self.async_step_login()
+
+    async def async_step_login(self, user_input=None):
+        """Get miner login credentials."""
+        if user_input is None:
+            user_input = {}
+
+        schema_data = {}
+
+        if self._miner.api is not None:
+            if self._miner.api.pwd is not None:
+                schema_data[
+                    vol.Optional(
+                        CONF_RPC_PASSWORD,
+                        default=user_input.get(
+                            CONF_RPC_PASSWORD,
+                            self._miner.web.pwd
+                            if self._miner.api.pwd is not None
+                            else "",
+                        ),
+                    )
+                ] = TextSelector(
+                    TextSelectorConfig(
+                        type=TextSelectorType.PASSWORD, autocomplete="current-password"
+                    )
+                )
+
+        if self._miner.web is not None:
+            schema_data[
+                vol.Required(
+                    CONF_WEB_USERNAME,
+                    default=user_input.get(CONF_WEB_USERNAME, self._miner.web.username),
+                )
+            ] = str
+            schema_data[
+                vol.Optional(
+                    CONF_WEB_PASSWORD,
+                    default=user_input.get(
+                        CONF_WEB_PASSWORD,
+                        self._miner.web.pwd if self._miner.web.pwd is not None else "",
+                    ),
+                )
+            ] = TextSelector(
+                TextSelectorConfig(
+                    type=TextSelectorType.PASSWORD, autocomplete="current-password"
+                )
+            )
+
+        if self._miner.ssh is not None:
+            schema_data[
+                vol.Required(
+                    CONF_SSH_USERNAME,
+                    default=user_input.get(CONF_SSH_USERNAME, self._miner.ssh.username),
+                )
+            ] = str
+            schema_data[
+                vol.Optional(
+                    CONF_SSH_PASSWORD,
+                    default=user_input.get(
+                        CONF_SSH_PASSWORD,
+                        self._miner.ssh.pwd if self._miner.ssh.pwd is not None else "",
+                    ),
+                )
+            ] = TextSelector(
+                TextSelectorConfig(
+                    type=TextSelectorType.PASSWORD, autocomplete="current-password"
+                )
+            )
+
+        schema = vol.Schema(schema_data)
+        if not user_input:
+            return self.async_show_form(step_id="login", data_schema=schema)
+
+        self._data.update(user_input)
+        return await self.async_step_title()
 
     async def async_step_title(self, user_input=None):
-        """Ask for Entity Title."""
-
-        miner_ip = self._data.get(CONF_IP)
-        miner = await pyasic.get_miner(miner_ip)  # should be fast, cached
-        title = await miner.get_hostname()
+        """Get entity title."""
+        title = await self._miner.get_hostname()
 
         if user_input is None:
             user_input = {}
@@ -102,14 +167,6 @@ class MinerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if not user_input:
             return self.async_show_form(step_id="title", data_schema=data_schema)
 
-        data = {**self._data, **user_input}
+        self._data.update(user_input)
 
-        return self.async_create_entry(title=data[CONF_TITLE], data=data)
-
-
-class CannotConnect(exceptions.HomeAssistantError):
-    """Error to indicate we cannot connect."""
-
-
-class InvalidAuth(exceptions.HomeAssistantError):
-    """Error to indicate there is invalid auth."""
+        return self.async_create_entry(title=self._data[CONF_TITLE], data=self._data)

@@ -1,12 +1,14 @@
 """Constants for the Miner integration."""
 
 DOMAIN = "miner"
+
 CONF_IP = "ip"
 CONF_TITLE = "title"
-CONF_PASSWORD = "password"
-CONF_USERNAME = "username"
+CONF_SSH_PASSWORD = "ssh_password"
+CONF_SSH_USERNAME = "ssh_username"
+CONF_RPC_PASSWORD = "rpc_password"
+CONF_WEB_PASSWORD = "web_password"
+CONF_WEB_USERNAME = "web_username"
 
-DEVICE_CLASS_HASHRATE = "hashrate"
-DEVICE_CLASS_EFFICIENCY = "efficiency"
 TERA_HASH_PER_SECOND = "TH/s"
 JOULES_PER_TERA_HASH = "J/TH"

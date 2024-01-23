@@ -6,11 +6,11 @@ import logging
 import pyasic
 from homeassistant.components.number import NumberEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import callback
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
-from pyasic.miners.backends import BOSMiner
 
 from .const import DOMAIN
 from .coordinator import MinerCoordinator
@@ -25,12 +25,6 @@ async def async_setup_entry(
 ) -> None:
     """Add sensors for passed config_entry in HA."""
     coordinator: MinerCoordinator = hass.data[DOMAIN][config_entry.entry_id]
-    created = set()
-
-    @callback
-    def _create_entity(key: str):
-        """Create a sensor entity."""
-        created.add(key)
 
     await coordinator.async_config_entry_first_refresh()
     if coordinator.miner.supports_autotuning:
@@ -109,42 +103,15 @@ class MinerPowerLimitNumber(CoordinatorEntity[MinerCoordinator], NumberEntity):
         miner = self.coordinator.miner
 
         _LOGGER.debug(
-            "%s: setting power limit to %s.", self.coordinator.entry.title, value
+            f"{self.coordinator.entry.title}: setting power limit to {value}."
         )
 
         if not miner.supports_autotuning:
             raise TypeError(
-                f"{self.coordinator.entry.title} does not support setting power limit."
+                f"{self.coordinator.entry.title}: Tuning not supported."
             )
 
-        if isinstance(miner, BOSMiner):
-            max_diff = 500
-            try:
-                try:
-                    current_value = self._attr_native_value
-                    diff = int(value) - int(current_value)
-                    smooth_tune = -max_diff < diff < max_diff
-
-                    if smooth_tune:
-                        if diff < 0:
-                            result = await miner.web.grpc.decrement_power_target(
-                                abs(diff)
-                            )
-                        else:
-                            result = await miner.web.grpc.increment_power_target(
-                                abs(diff)
-                            )
-                    else:
-                        result = await miner.web.grpc.set_power_target(int(value))
-                except TypeError:
-                    result = await miner.web.grpc.set_power_target(int(value))
-            except pyasic.APIError:
-                result = await miner.set_power_limit(int(value))
-
-        else:
-            result = await miner.set_power_limit(
-                int(value)
-            )  # noqa: ignore miner being assumed to be None
+        result = await miner.set_power_limit(int(value))
 
         if not result:
             raise pyasic.APIError("Failed to set wattage.")
@@ -160,3 +127,8 @@ class MinerPowerLimitNumber(CoordinatorEntity[MinerCoordinator], NumberEntity):
             ]
 
         super()._handle_coordinator_update()
+
+    @property
+    def available(self) -> bool:
+        """Return if entity is available or not."""
+        return self.coordinator.available
