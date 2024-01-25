@@ -53,13 +53,12 @@ class MinerCoordinator(DataUpdateCoordinator):
         """Fetch sensors from miners."""
 
         miner_ip = self.entry.data[CONF_IP]
-        if self.miner is None:
-            self.miner = await pyasic.get_miner(miner_ip)
-
-        _LOGGER.debug(f"Found miner :{self.miner}")
+        self.miner = await pyasic.get_miner(miner_ip)
 
         if self.miner is None:
             raise UpdateFailed("Miner Offline")
+
+        _LOGGER.debug(f"Found miner :{self.miner}")
 
         try:
             if self.miner.api is not None:
