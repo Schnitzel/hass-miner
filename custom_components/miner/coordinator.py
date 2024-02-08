@@ -6,16 +6,15 @@ import pyasic
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.debounce import Debouncer
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+from homeassistant.helpers.update_coordinator import UpdateFailed
 
-from .const import (
-    CONF_IP,
-    CONF_RPC_PASSWORD,
-    CONF_SSH_PASSWORD,
-    CONF_SSH_USERNAME,
-    CONF_WEB_PASSWORD,
-    CONF_WEB_USERNAME,
-)
+from .const import CONF_IP
+from .const import CONF_RPC_PASSWORD
+from .const import CONF_SSH_PASSWORD
+from .const import CONF_SSH_USERNAME
+from .const import CONF_WEB_PASSWORD
+from .const import CONF_WEB_USERNAME
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -58,7 +57,7 @@ class MinerCoordinator(DataUpdateCoordinator):
         if self.miner is None:
             raise UpdateFailed("Miner Offline")
 
-        _LOGGER.debug(f"Found miner :{self.miner}")
+        _LOGGER.debug(f"Found miner: {self.miner}")
 
         try:
             if self.miner.api is not None:

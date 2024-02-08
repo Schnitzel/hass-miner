@@ -36,17 +36,6 @@ async def async_setup_entry(
             ]
         )
 
-    # @callback
-    # def new_data_received():
-    #     """Check for new sensors."""
-    #     entities = [
-    #         _create_entity(key) for key in coordinator.data if key not in created
-    #     ]
-    #     if entities:
-    #         async_add_entities(entities)
-
-    # coordinator.async_add_listener(new_data_received)
-
 
 class MinerPowerLimitNumber(CoordinatorEntity[MinerCoordinator], NumberEntity):
     """Defines a Miner Number to set the Power Limit of the Miner."""
@@ -107,9 +96,7 @@ class MinerPowerLimitNumber(CoordinatorEntity[MinerCoordinator], NumberEntity):
         )
 
         if not miner.supports_autotuning:
-            raise TypeError(
-                f"{self.coordinator.entry.title}: Tuning not supported."
-            )
+            raise TypeError(f"{self.coordinator.entry.title}: Tuning not supported.")
 
         result = await miner.set_power_limit(int(value))
 
