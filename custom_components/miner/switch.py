@@ -63,6 +63,7 @@ class MinerActiveSwitch(CoordinatorEntity[MinerCoordinator], SwitchEntity):
         super().__init__(coordinator=coordinator)
         self._attr_unique_id = f"{self.coordinator.data['mac']}-active"
         self._attr_is_on = self.coordinator.data["is_mining"]
+        self.updating_switch = False
 
     @property
     def name(self) -> str | None:
@@ -88,7 +89,7 @@ class MinerActiveSwitch(CoordinatorEntity[MinerCoordinator], SwitchEntity):
             raise TypeError(f"{miner}: Shutdown not supported.")
         self._attr_is_on = True
         await miner.resume_mining()
-        self.coordinator.data["is_mining"] = True
+        self.updating_switch = True
         self.async_write_ha_state()
 
     async def async_turn_off(self) -> None:
@@ -99,14 +100,18 @@ class MinerActiveSwitch(CoordinatorEntity[MinerCoordinator], SwitchEntity):
             raise TypeError(f"{miner}: Shutdown not supported.")
         self._attr_is_on = False
         await miner.stop_mining()
-        self.coordinator.data["is_mining"] = False
+        self.updating_switch = True
         self.async_write_ha_state()
 
     @callback
     def _handle_coordinator_update(self) -> None:
         is_mining = self.coordinator.data["is_mining"]
         if is_mining is not None:
-            self._attr_is_on = self.coordinator.data["is_mining"]
+            if self.updating_switch:
+                if is_mining == self._attr_is_on:
+                    self.updating_switch = False
+            if not self.updating_switch:
+                self._attr_is_on = is_mining
 
         super()._handle_coordinator_update()
 
