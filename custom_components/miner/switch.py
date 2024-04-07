@@ -88,6 +88,7 @@ class MinerActiveSwitch(CoordinatorEntity[MinerCoordinator], SwitchEntity):
             raise TypeError(f"{miner}: Shutdown not supported.")
         self._attr_is_on = True
         await miner.resume_mining()
+        self.coordinator.data["is_mining"] = True
         self.async_write_ha_state()
 
     async def async_turn_off(self) -> None:
@@ -98,6 +99,7 @@ class MinerActiveSwitch(CoordinatorEntity[MinerCoordinator], SwitchEntity):
             raise TypeError(f"{miner}: Shutdown not supported.")
         self._attr_is_on = False
         await miner.stop_mining()
+        self.coordinator.data["is_mining"] = False
         self.async_write_ha_state()
 
     @callback
