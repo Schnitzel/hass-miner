@@ -7,7 +7,7 @@
   "homekit": {},
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/Schnitzel/hass-miner/issues",
-  "requirements": ["pyasic==0.55.2"],
+  "requirements": ["pyasic==0.57.4"],
   "ssdp": [],
   "version": "1.1.9",
   "zeroconf": []
