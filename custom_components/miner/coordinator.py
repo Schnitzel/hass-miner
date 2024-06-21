@@ -95,6 +95,16 @@ class MinerCoordinator(DataUpdateCoordinator):
 
         _LOGGER.debug(f"Got data: {miner_data}")
 
+        try:
+            hashrate = round(float(miner_data.hashrate), 2)
+        except TypeError:
+            hashrate = None
+            
+        try:
+            expected_hashrate = round(float(miner_data.expected_hashrate), 2)
+        except TypeError:
+            expected_hashrate = None
+        
         data = {
             "hostname": miner_data.hostname,
             "mac": miner_data.mac,
