@@ -4,9 +4,13 @@ import logging
 import pyasic
 import voluptuous as vol
 from homeassistant import config_entries
+from homeassistant.components import network
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.config_entry_flow import register_discovery_flow
 from homeassistant.helpers.selector import TextSelector
 from homeassistant.helpers.selector import TextSelectorConfig
 from homeassistant.helpers.selector import TextSelectorType
+from pyasic import MinerNetwork
 
 from .const import CONF_IP
 from .const import CONF_RPC_PASSWORD
@@ -19,14 +23,23 @@ from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
-# async def _async_has_devices(hass: HomeAssistant) -> bool:
-#     """Return if there are devices that can be discovered."""
-#     # TODO Check if there are any devices that can be discovered in the network.
-#     devices = await hass.async_add_executor_job(my_pypi_dependency.discover)
-#     return len(devices) > 0
+
+async def _async_has_devices(hass: HomeAssistant) -> bool:
+    """Return if there are devices that can be discovered."""
+    adapters = await network.async_get_adapters(hass)
+
+    for adapter in adapters:
+        for ip_info in adapter["ipv4"]:
+            local_ip = ip_info["address"]
+            network_prefix = ip_info["network_prefix"]
+            miner_net = MinerNetwork.from_subnet(f"{local_ip}/{network_prefix}")
+            miners = await miner_net.scan()
+            if len(miners) > 0:
+                return True
+    return False
 
 
-# config_entry_flow.register_discovery_flow(DOMAIN, "miner", _async_has_devices)
+register_discovery_flow(DOMAIN, "miner", _async_has_devices)
 
 
 async def validate_ip_input(
@@ -82,8 +95,8 @@ class MinerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         schema_data = {}
 
-        if self._miner.api is not None:
-            if self._miner.api.pwd is not None:
+        if self._miner.rpc is not None:
+            if self._miner.rpc.pwd is not None:
                 schema_data[
                     vol.Optional(
                         CONF_RPC_PASSWORD,

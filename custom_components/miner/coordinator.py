@@ -6,16 +6,15 @@ import pyasic
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.debounce import Debouncer
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+from homeassistant.helpers.update_coordinator import UpdateFailed
 
-from .const import (
-    CONF_IP,
-    CONF_RPC_PASSWORD,
-    CONF_SSH_PASSWORD,
-    CONF_SSH_USERNAME,
-    CONF_WEB_PASSWORD,
-    CONF_WEB_USERNAME,
-)
+from .const import CONF_IP
+from .const import CONF_RPC_PASSWORD
+from .const import CONF_SSH_PASSWORD
+from .const import CONF_SSH_USERNAME
+from .const import CONF_WEB_PASSWORD
+from .const import CONF_WEB_USERNAME
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -58,7 +57,7 @@ class MinerCoordinator(DataUpdateCoordinator):
         if self.miner is None:
             raise UpdateFailed("Miner Offline")
 
-        _LOGGER.debug(f"Found miner :{self.miner}")
+        _LOGGER.debug(f"Found miner: {self.miner}")
 
         try:
             if self.miner.api is not None:
@@ -115,8 +114,8 @@ class MinerCoordinator(DataUpdateCoordinator):
             "is_mining": miner_data.is_mining,
             "fw_ver": miner_data.fw_ver,
             "miner_sensors": {
-                "hashrate": hashrate,
-                "ideal_hashrate": expected_hashrate,
+                "hashrate": round(float(miner_data.hashrate or 0), 2),
+                "ideal_hashrate": round(float(miner_data.expected_hashrate or 0), 2),
                 "temperature": miner_data.temperature_avg,
                 "power_limit": miner_data.wattage_limit,
                 "miner_consumption": miner_data.wattage,
@@ -126,7 +125,7 @@ class MinerCoordinator(DataUpdateCoordinator):
                 board.slot: {
                     "board_temperature": board.temp,
                     "chip_temperature": board.chip_temp,
-                    "board_hashrate": board.hashrate,
+                    "board_hashrate": round(float(board.hashrate or 0), 2),
                 }
                 for board in miner_data.hashboards
             },
