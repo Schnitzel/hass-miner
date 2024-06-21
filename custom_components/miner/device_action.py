@@ -25,6 +25,7 @@ ACTION_TYPES = {"reboot", "restart_backend"}
 ACTION_SCHEMA = cv.DEVICE_ACTION_BASE_SCHEMA.extend(
     {
         vol.Required(CONF_TYPE): vol.In(ACTION_TYPES),
+        vol.Required(CONF_DOMAIN): DOMAIN,
         vol.Required(CONF_ENTITY_ID): cv.entity_domain(DOMAIN),
     }
 )
@@ -58,7 +59,7 @@ async def async_get_actions(
                 )
             except AttributeError:
                 _LOGGER.error(
-                    "Failed to run device command for miner: Unable to access entry data."
+                    "Failed to add device command for miner: Unable to access entry data."
                 )
 
     return actions
