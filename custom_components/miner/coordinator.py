@@ -104,8 +104,8 @@ class MinerCoordinator(DataUpdateCoordinator):
             "is_mining": miner_data.is_mining,
             "fw_ver": miner_data.fw_ver,
             "miner_sensors": {
-                "hashrate": miner_data.hashrate,
-                "ideal_hashrate": miner_data.expected_hashrate,
+                "hashrate": round(float(miner_data.hashrate or 0), 2),
+                "ideal_hashrate": round(float(miner_data.expected_hashrate or 0), 2),
                 "temperature": miner_data.temperature_avg,
                 "power_limit": miner_data.wattage_limit,
                 "miner_consumption": miner_data.wattage,
@@ -115,7 +115,7 @@ class MinerCoordinator(DataUpdateCoordinator):
                 board.slot: {
                     "board_temperature": board.temp,
                     "chip_temperature": board.chip_temp,
-                    "board_hashrate": board.hashrate,
+                    "board_hashrate": round(float(board.hashrate or 0), 2),
                 }
                 for board in miner_data.hashboards
             },

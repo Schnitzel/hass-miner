@@ -6,7 +6,7 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.components import network
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import config_entry_flow
+from homeassistant.helpers.config_entry_flow import register_discovery_flow
 from homeassistant.helpers.selector import TextSelector
 from homeassistant.helpers.selector import TextSelectorConfig
 from homeassistant.helpers.selector import TextSelectorType
@@ -39,7 +39,7 @@ async def _async_has_devices(hass: HomeAssistant) -> bool:
     return False
 
 
-config_entry_flow.register_discovery_flow(DOMAIN, "miner", _async_has_devices)
+register_discovery_flow(DOMAIN, "miner", _async_has_devices)
 
 
 async def validate_ip_input(
