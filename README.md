@@ -22,6 +22,13 @@ Control your Bitcoin miner from Home Assistant.
 | `number` | Set Power Limit of Miner. |
 | `switch` | Switch Miner on and off   |
 
+** This component will add the following services **
+
+| Service | Description |
+| ------- | ----------- |
+| `reboot` | Reboot a miner by IP |
+| `restart_backend` | Restart the backend of a miner by IP |
+
 ## Installation
 
 Use HACS, add the custom repo https://github.com/Schnitzel/hass-miner to it
