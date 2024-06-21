@@ -1,15 +1,15 @@
 reboot:
   fields:
-    ip:
+    mac:
       required: true
-      example: 192.168.1.60
+      example: 01:23:45:67:89:00
       selector:
         text:
 
 restart_backend:
   fields:
-    ip:
+    mac:
       required: true
-      example: 192.168.1.60
+      example: 01:23:45:67:89:00
       selector:
         text:

@@ -61,7 +61,6 @@ class MinerPowerLimitNumber(CoordinatorEntity[MinerCoordinator], NumberEntity):
             model=self.coordinator.data["model"],
             sw_version=self.coordinator.data["fw_ver"],
             name=f"{self.coordinator.entry.title}",
-
         )
 
     @property
