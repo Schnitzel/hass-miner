@@ -4,7 +4,7 @@ from __future__ import annotations
 import logging
 
 import voluptuous as vol
-from homeassistant.const import ATTR_ENTITY_ID
+from homeassistant.const import ATTR_ENTITY_ID, CONF_MAC
 from homeassistant.const import CONF_DEVICE_ID
 from homeassistant.const import CONF_DOMAIN
 from homeassistant.const import CONF_ENTITY_ID

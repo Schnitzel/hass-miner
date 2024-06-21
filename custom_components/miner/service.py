@@ -4,7 +4,7 @@ from __future__ import annotations
 import logging
 
 import pyasic
-from homeassistant.const import CONF_MAC
+from homeassistant.const import CONF_MAC, CONF_DEVICE_ID
 from homeassistant.core import HomeAssistant
 from homeassistant.core import ServiceCall
 
@@ -21,30 +21,15 @@ async def async_setup_services(hass: HomeAssistant) -> None:
     """Service handler setup."""
 
     async def get_miner(call: ServiceCall):
-        mac = call.data.get(CONF_MAC)
         miners = hass.data[DOMAIN]
+        miner_id = call.data[CONF_DEVICE_ID]
 
-        if mac is None or mac not in miners:
+        if miner_id is None or miner_id not in miners:
             LOGGER.error(
-                f"Cannot get miner, must specify a mac from [{miners}]",
+                f"Cannot get miner, must specify a miner from [{miners}]",
             )
             return
-        miner = await pyasic.get_miner(miners[mac].data[CONF_IP])
-
-        entry = miners[mac]
-        if miner.api is not None:
-            if miner.api.pwd is not None:
-                miner.api.pwd = entry.data.get(CONF_RPC_PASSWORD, "")
-
-        if miner.web is not None:
-            miner.web.username = entry.data.get(CONF_WEB_USERNAME, "")
-            miner.web.pwd = entry.data.get(CONF_WEB_PASSWORD, "")
-
-        if miner.ssh is not None:
-            miner.ssh.username = entry.data.get(CONF_SSH_USERNAME, "")
-            miner.ssh.pwd = entry.data.get(CONF_SSH_PASSWORD, "")
-        return miner
-
+        return miners[miner_id].miner
 
     async def reboot(call: ServiceCall) -> None:
         miner = await get_miner(call)
