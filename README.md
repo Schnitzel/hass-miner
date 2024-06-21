@@ -22,7 +22,7 @@ Control your Bitcoin miner from Home Assistant.
 | `number` | Set Power Limit of Miner. |
 | `switch` | Switch Miner on and off   |
 
-** This component will add the following services **
+**This component will add the following services -**
 
 | Service | Description |
 | ------- | ----------- |
