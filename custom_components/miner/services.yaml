@@ -1,6 +1,7 @@
 reboot:
   fields:
     ip:
+      required: true
       example: 192.168.1.60
       selector:
         text:
@@ -8,6 +9,7 @@ reboot:
 restart_backend:
   fields:
     ip:
+      required: true
       example: 192.168.1.60
       selector:
         text:
