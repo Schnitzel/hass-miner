@@ -10,6 +10,7 @@ from homeassistant.exceptions import ConfigEntryNotReady
 from .const import CONF_IP
 from .const import DOMAIN
 from .coordinator import MinerCoordinator
+from .service import async_setup_services
 
 PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.SWITCH, Platform.NUMBER]
 
@@ -27,6 +28,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = m_coordinator
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+
+    await async_setup_services(hass)
 
     return True
 
