@@ -1,8 +1,8 @@
 reboot:
   target:
-    device:
+    entity:
       domain: miner
 restart_backend:
   target:
-    device:
+    entity:
       domain: miner
