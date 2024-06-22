@@ -29,7 +29,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                 f"Cannot get miner, must specify a miner from [{miners}]",
             )
             return
-        return miners[miner_id].miner
+        return await miners[miner_id].get_miner()
 
     async def reboot(call: ServiceCall) -> None:
         miner = await get_miner(call)

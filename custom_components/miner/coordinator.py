@@ -8,6 +8,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.debounce import Debouncer
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.helpers.update_coordinator import UpdateFailed
+from pyasic import AnyMiner
 
 from .const import CONF_IP
 from .const import CONF_RPC_PASSWORD
@@ -30,6 +31,7 @@ class MinerCoordinator(DataUpdateCoordinator):
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
         """Initialize MinerCoordinator object."""
         self.entry = entry
+        self.miner = None
         super().__init__(
             hass=hass,
             logger=_LOGGER,
@@ -48,29 +50,37 @@ class MinerCoordinator(DataUpdateCoordinator):
         """Return if device is available or not."""
         return self.miner is not None
 
+    async def get_miner(self):
+        miner_ip = self.entry.data[CONF_IP]
+        miner = await pyasic.get_miner(miner_ip)
+        if miner is None:
+            return None
+
+        self.miner = miner
+        if self.miner.api is not None:
+            if self.miner.api.pwd is not None:
+                self.miner.api.pwd = self.entry.data.get(CONF_RPC_PASSWORD, "")
+
+        if self.miner.web is not None:
+            self.miner.web.username = self.entry.data.get(CONF_WEB_USERNAME, "")
+            self.miner.web.pwd = self.entry.data.get(CONF_WEB_PASSWORD, "")
+
+        if self.miner.ssh is not None:
+            self.miner.ssh.username = self.entry.data.get(CONF_SSH_USERNAME, "")
+            self.miner.ssh.pwd = self.entry.data.get(CONF_SSH_PASSWORD, "")
+        return self.miner
+
+
     async def _async_update_data(self):
         """Fetch sensors from miners."""
+        miner = await self.get_miner()
 
-        miner_ip = self.entry.data[CONF_IP]
-        self.miner = await pyasic.get_miner(miner_ip)
-
-        if self.miner is None:
+        if miner is None:
             raise UpdateFailed("Miner Offline")
 
         _LOGGER.debug(f"Found miner: {self.miner}")
 
         try:
-            if self.miner.api is not None:
-                if self.miner.api.pwd is not None:
-                    self.miner.api.pwd = self.entry.data.get(CONF_RPC_PASSWORD, "")
-
-            if self.miner.web is not None:
-                self.miner.web.username = self.entry.data.get(CONF_WEB_USERNAME, "")
-                self.miner.web.pwd = self.entry.data.get(CONF_WEB_PASSWORD, "")
-
-            if self.miner.ssh is not None:
-                self.miner.ssh.username = self.entry.data.get(CONF_SSH_USERNAME, "")
-                self.miner.ssh.pwd = self.entry.data.get(CONF_SSH_PASSWORD, "")
 
             miner_data = await self.miner.get_data(
                 include=[
