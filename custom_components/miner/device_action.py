@@ -4,7 +4,8 @@ from __future__ import annotations
 import logging
 
 import voluptuous as vol
-from homeassistant.const import ATTR_ENTITY_ID, CONF_MAC
+from homeassistant.components.device_automation import async_validate_entity_schema
+from homeassistant.const import ATTR_ENTITY_ID
 from homeassistant.const import CONF_DEVICE_ID
 from homeassistant.const import CONF_DOMAIN
 from homeassistant.const import CONF_ENTITY_ID
@@ -13,6 +14,7 @@ from homeassistant.core import Context
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import entity_registry as er
+from homeassistant.helpers.typing import ConfigType
 
 from .const import DOMAIN
 from .const import SERVICE_REBOOT
@@ -30,6 +32,11 @@ ACTION_SCHEMA = cv.DEVICE_ACTION_BASE_SCHEMA.extend(
     }
 )
 
+async def async_validate_action_config(
+    hass: HomeAssistant, config: ConfigType
+) -> ConfigType:
+    """Validate config."""
+    return async_validate_entity_schema(hass, config, ACTION_SCHEMA)
 
 async def async_get_actions(
     hass: HomeAssistant, device_id: str
