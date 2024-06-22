@@ -1,0 +1,8 @@
+reboot:
+  target:
+    entity:
+      domain: miner
+restart_backend:
+  target:
+    entity:
+      domain: miner
