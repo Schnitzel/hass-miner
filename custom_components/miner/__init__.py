@@ -10,7 +10,7 @@ from homeassistant.exceptions import ConfigEntryNotReady
 from .const import CONF_IP
 from .const import DOMAIN
 from .coordinator import MinerCoordinator
-from .service import async_setup_services
+from .services import async_setup_services
 
 PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.SWITCH, Platform.NUMBER]
 
