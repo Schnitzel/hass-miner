@@ -1,4 +1,5 @@
 """Support for Miner sensors."""
+
 from __future__ import annotations
 
 import logging
@@ -130,17 +131,37 @@ async def async_setup_entry(
             entity_description=description,
         )
 
+    def _create_kw_sensor(sensor: MinerSensor) -> MinerSensor:
+        """Create a kilowatt sensor entity."""
+        kw_sensor = MinerSensor(
+            coordinator=sensor.coordinator,
+            sensor=f"{sensor.sensor}_kw",
+            entity_description=MinerSensorEntityDescription(
+                key=f"{sensor.entity_description.key} (kW)",
+                native_unit_of_measurement="kW",
+                state_class=sensor.entity_description.state_class,
+            ),
+        )
+        kw_sensor._state = lambda: sensor.state / 1000  # Convert W to kW
+        return kw_sensor
+
     await coordinator.async_config_entry_first_refresh()
 
     sensors = []
     for s in coordinator.data["miner_sensors"]:
-        sensors.append(_create_miner_entity(s))
+        miner_sensor = _create_miner_entity(s)
+        sensors.append(miner_sensor)
+        if s == "miner_consumption":
+            sensors.append(_create_kw_sensor(miner_sensor))
+
     for board in range(coordinator.miner.expected_hashboards):
         for s in ["board_temperature", "chip_temperature", "board_hashrate"]:
             sensors.append(_create_board_entity(board, s))
+
     for fan in range(coordinator.miner.expected_fans):
         for s in ["fan_speed"]:
             sensors.append(_create_fan_entity(fan, s))
+
     async_add_entities(sensors)
 
 
@@ -188,6 +209,8 @@ class MinerSensor(CoordinatorEntity[MinerCoordinator], SensorEntity):
     @property
     def native_value(self) -> StateType:
         """Return the state of the sensor."""
+        if hasattr(self, "_state") and callable(self._state):
+            return self._state()
         return self._sensor_data
 
     @property
