@@ -33,7 +33,7 @@ async def _async_has_devices(hass: HomeAssistant) -> bool:
             local_ip = ip_info["address"]
             network_prefix = ip_info["network_prefix"]
             miner_net = MinerNetwork.from_subnet(f"{local_ip}/{network_prefix}")
-            miners = await miner_net.scan()
+            miners = await hass.async_add_executor_job(miner_net.scan)
             if len(miners) > 0:
                 return True
     return False
