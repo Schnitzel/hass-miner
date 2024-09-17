@@ -1,6 +1,6 @@
 colorlog==6.7.0
 homeassistant>=2024.6.3
-pip>=21.0,<23.2
+pip>=21.0,<24.3
 ruff==0.0.267
 pyasic==0.57.6
 setuptools==69.0.3
