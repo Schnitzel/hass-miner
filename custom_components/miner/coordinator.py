@@ -97,6 +97,7 @@ class MinerCoordinator(DataUpdateCoordinator):
                 ]
             )
         except Exception as err:
+            _LOGGER.exception(err)
             raise UpdateFailed from err
 
         _LOGGER.debug(f"Got data: {miner_data}")
