@@ -27,6 +27,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     m_coordinator = MinerCoordinator(hass, entry)
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = m_coordinator
 
+    await m_coordinator.async_config_entry_first_refresh()
+
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     await async_setup_services(hass)
