@@ -96,12 +96,8 @@ class MinerCoordinator(DataUpdateCoordinator):
                     pyasic.DataOptions.FANS,
                 ]
             )
-
-        except pyasic.APIError as err:
-            raise UpdateFailed("API Error") from err
-
         except Exception as err:
-            raise UpdateFailed("Unknown Error") from err
+            raise UpdateFailed from err
 
         _LOGGER.debug(f"Got data: {miner_data}")
 
