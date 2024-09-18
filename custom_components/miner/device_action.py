@@ -32,11 +32,13 @@ ACTION_SCHEMA = cv.DEVICE_ACTION_BASE_SCHEMA.extend(
     }
 )
 
+
 async def async_validate_action_config(
     hass: HomeAssistant, config: ConfigType
 ) -> ConfigType:
     """Validate config."""
     return async_validate_entity_schema(hass, config, ACTION_SCHEMA)
+
 
 async def async_get_actions(
     hass: HomeAssistant, device_id: str

@@ -8,7 +8,8 @@ from homeassistant.components.number import NumberEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import callback
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import entity, device_registry
+from homeassistant.helpers import device_registry
+from homeassistant.helpers import entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -55,7 +56,10 @@ class MinerPowerLimitNumber(CoordinatorEntity[MinerCoordinator], NumberEntity):
         """Return device info."""
         return entity.DeviceInfo(
             identifiers={(DOMAIN, self.coordinator.data["mac"])},
-            connections={("ip", self.coordinator.data["ip"]), (device_registry.CONNECTION_NETWORK_MAC, self.coordinator.data["mac"])},
+            connections={
+                ("ip", self.coordinator.data["ip"]),
+                (device_registry.CONNECTION_NETWORK_MAC, self.coordinator.data["mac"]),
+            },
             configuration_url=f"http://{self.coordinator.data['ip']}",
             manufacturer=self.coordinator.data["make"],
             model=self.coordinator.data["model"],

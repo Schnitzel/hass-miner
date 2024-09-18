@@ -24,9 +24,9 @@ Control your Bitcoin miner from Home Assistant.
 
 **This component will add the following services -**
 
-| Service | Description |
-| ------- | ----------- |
-| `reboot` | Reboot a miner by IP |
+| Service           | Description                          |
+| ----------------- | ------------------------------------ |
+| `reboot`          | Reboot a miner by IP                 |
 | `restart_backend` | Restart the backend of a miner by IP |
 
 ## Installation

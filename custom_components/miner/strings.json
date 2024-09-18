@@ -1,4 +1,5 @@
 {
+  "title": "HASS-miner",
   "config": {
     "step": {
       "user": {
@@ -24,6 +25,16 @@
     "abort": {
       "single_instance_allowed": "[%key:common::config_flow::abort::single_instance_allowed%]",
       "no_devices_found": "[%key:common::config_flow::abort::no_devices_found%]"
+    }
+  },
+  "services": {
+    "reboot": {
+      "name": "Reboot miner",
+      "description": "Reboots a miner."
+    },
+    "restart_backend": {
+      "name": "Restart mining on miner",
+      "description": "Restarts the mining process on a miner."
     }
   }
 }

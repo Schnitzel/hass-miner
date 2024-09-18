@@ -3,6 +3,7 @@
   "name": "Miner",
   "codeowners": ["@Schnitzel"],
   "config_flow": true,
+  "dependencies": ["network"],
   "documentation": "https://github.com/Schnitzel/hass-miner",
   "homekit": {},
   "iot_class": "local_polling",
