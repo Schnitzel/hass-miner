@@ -1,29 +1,40 @@
 {
+  "title": "HASS-miner",
   "config": {
-    "abort": {
-      "no_devices_found": "No devices found on the network",
-      "single_instance_allowed": "Already configured. Only a single configuration possible."
-    },
     "step": {
       "user": {
         "data": {
-          "ip": "IP Address"
+          "ip": "[%key:common::config_flow::data::ip%]"
         }
       },
       "login": {
         "data": {
-          "ssh_username": "SSH Username",
-          "ssh_password": "SSH Password",
-          "rpc_password": "RPC API Password",
-          "web_username": "Web Username",
-          "web_password": "Web Password"
+          "ssh_username": "[%key:common::config_flow::data::ssh_username%]",
+          "ssh_password": "[%key:common::config_flow::data::ssh_password%]",
+          "rpc_password": "[%key:common::config_flow::data::rpc_password%]",
+          "web_username": "[%key:common::config_flow::data::web_username%]",
+          "web_password": "[%key:common::config_flow::data::web_password%]"
         }
       },
       "title": {
         "data": {
-          "title": "Title"
+          "title": "[%key:common::config_flow::data::title%]"
         }
       }
+    },
+    "abort": {
+      "single_instance_allowed": "[%key:common::config_flow::abort::single_instance_allowed%]",
+      "no_devices_found": "[%key:common::config_flow::abort::no_devices_found%]"
+    }
+  },
+  "services": {
+    "reboot": {
+      "name": "Reboot miner",
+      "description": "Reboots a miner."
+    },
+    "restart_backend": {
+      "name": "Restart mining on miner",
+      "description": "Restarts the mining process on a miner."
     }
   }
 }
