@@ -115,7 +115,7 @@ class MinerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         if self._miner.web is not None:
             schema_data[
-                vol.Required(
+                vol.Optional(
                     CONF_WEB_USERNAME,
                     default=user_input.get(CONF_WEB_USERNAME, self._miner.web.username),
                 )
