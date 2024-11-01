@@ -9,8 +9,7 @@
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/Schnitzel/hass-miner/issues",
   "requirements": [
-    "betterproto==2.0.0b7",
-    "pyasic==0.61.13"
+    "betterproto==2.0.0b7 pyasic==0.61.13"
   ],
   "ssdp": [],
   "version": "1.1.17rc2",
