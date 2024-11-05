@@ -4,5 +4,5 @@ pip>=21.0,<23.2
 ruff==0.6.9
 pyasic==0.62.1
 betterproto==2.0.0b7
-setuptools==75.1.0
+setuptools==75.3.0
 pre-commit
