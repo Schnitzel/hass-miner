@@ -1,7 +1,15 @@
 """The Miner integration."""
 from __future__ import annotations
 
-import pyasic
+
+try:
+    import pyasic
+except ImportError:
+    from .patch import install_package
+    from .const import PYASIC_VERSION
+    install_package(f"pyasic=={PYASIC_VERSION}")
+    import pyasic
+
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant

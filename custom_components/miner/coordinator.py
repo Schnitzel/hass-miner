@@ -2,7 +2,13 @@
 import logging
 from datetime import timedelta
 
-import pyasic
+try:
+    import pyasic
+except ImportError:
+    from .patch import install_package
+    from .const import PYASIC_VERSION
+    install_package(f"pyasic=={PYASIC_VERSION}")
+    import pyasic
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.debounce import Debouncer

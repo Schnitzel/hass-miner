@@ -1,7 +1,15 @@
 """Config flow for Miner."""
 import logging
 
-import pyasic
+try:
+    import pyasic
+except ImportError:
+    from .patch import install_package
+    from .const import PYASIC_VERSION
+    install_package(f"pyasic=={PYASIC_VERSION}")
+    import pyasic
+    from pyasic import MinerNetwork
+
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.components import network
@@ -10,7 +18,6 @@ from homeassistant.helpers.config_entry_flow import register_discovery_flow
 from homeassistant.helpers.selector import TextSelector
 from homeassistant.helpers.selector import TextSelectorConfig
 from homeassistant.helpers.selector import TextSelectorType
-from pyasic import MinerNetwork
 
 from .const import CONF_IP
 from .const import CONF_RPC_PASSWORD
