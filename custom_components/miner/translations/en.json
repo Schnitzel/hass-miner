@@ -4,16 +4,16 @@
     "step": {
       "user": {
         "data": {
-          "ip": "[%key:common::config_flow::data::ip%]"
+          "ip": "IP Address"
         }
       },
       "login": {
         "data": {
-          "ssh_username": "[%key:common::config_flow::data::ssh_username%]",
-          "ssh_password": "[%key:common::config_flow::data::ssh_password%]",
-          "rpc_password": "[%key:common::config_flow::data::rpc_password%]",
-          "web_username": "[%key:common::config_flow::data::web_username%]",
-          "web_password": "[%key:common::config_flow::data::web_password%]"
+          "ssh_username": "SSH Username",
+          "ssh_password": "SSH Password",
+          "rpc_password": "RPC Password",
+          "web_username": "RPC Username",
+          "web_password": "Web Password"
         }
       },
       "title": {
