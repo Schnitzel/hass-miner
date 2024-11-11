@@ -3,5 +3,5 @@ homeassistant>=2024.10.0
 pip>=21.0,<23.2
 ruff==0.6.9
 pyasic==0.62.3
-setuptools==75.1.0
+setuptools==75.4.0
 pre-commit
