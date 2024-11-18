@@ -6,6 +6,7 @@ try:
 except ImportError:
     from .patch import install_package
     from .const import PYASIC_VERSION
+
     install_package(f"pyasic=={PYASIC_VERSION}")
     import pyasic
     from pyasic import MinerNetwork
@@ -109,7 +110,7 @@ class MinerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         CONF_RPC_PASSWORD,
                         default=user_input.get(
                             CONF_RPC_PASSWORD,
-                            self._miner.web.pwd
+                            self._miner.rpc.pwd
                             if self._miner.api.pwd is not None
                             else "",
                         ),
