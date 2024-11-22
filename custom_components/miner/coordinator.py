@@ -99,6 +99,7 @@ class MinerCoordinator(DataUpdateCoordinator):
                     pyasic.DataOptions.WATTAGE,
                     pyasic.DataOptions.WATTAGE_LIMIT,
                     pyasic.DataOptions.FANS,
+                    pyasic.DataOptions.CONFIG,
                 ]
             )
         except Exception as err:
@@ -144,5 +145,6 @@ class MinerCoordinator(DataUpdateCoordinator):
             "fan_sensors": {
                 idx: {"fan_speed": fan.speed} for idx, fan in enumerate(miner_data.fans)
             },
+            "config": miner_data.config
         }
         return data
