@@ -64,6 +64,7 @@ class MinerActiveSwitch(CoordinatorEntity[MinerCoordinator], SwitchEntity):
         self._attr_unique_id = f"{self.coordinator.data['mac']}-active"
         self._attr_is_on = self.coordinator.data["is_mining"]
         self.updating_switch = False
+        self._last_mining_mode = None
 
     @property
     def name(self) -> str | None:
@@ -89,6 +90,10 @@ class MinerActiveSwitch(CoordinatorEntity[MinerCoordinator], SwitchEntity):
             raise TypeError(f"{miner}: Shutdown not supported.")
         self._attr_is_on = True
         await miner.resume_mining()
+        if miner.supports_power_modes:
+            config = await miner.get_config()
+            config.mining_mode = self._last_mining_mode
+            await miner.send_config(config)
         self.updating_switch = True
         self.async_write_ha_state()
 
@@ -98,6 +103,8 @@ class MinerActiveSwitch(CoordinatorEntity[MinerCoordinator], SwitchEntity):
         _LOGGER.debug(f"{self.coordinator.entry.title}: Stop mining.")
         if not miner.supports_shutdown:
             raise TypeError(f"{miner}: Shutdown not supported.")
+        if miner.supports_power_modes:
+            self._last_mining_mode = self.coordinator.data["config"].mining_mode
         self._attr_is_on = False
         await miner.stop_mining()
         self.updating_switch = True
