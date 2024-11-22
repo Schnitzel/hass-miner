@@ -8,6 +8,7 @@ try:
 except ImportError:
     from .patch import install_package
     from .const import PYASIC_VERSION
+
     install_package(f"pyasic=={PYASIC_VERSION}")
     import pyasic
 

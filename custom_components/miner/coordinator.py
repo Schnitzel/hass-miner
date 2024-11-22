@@ -7,6 +7,7 @@ try:
 except ImportError:
     from .patch import install_package
     from .const import PYASIC_VERSION
+
     install_package(f"pyasic=={PYASIC_VERSION}")
     import pyasic
 from homeassistant.config_entries import ConfigEntry
@@ -145,6 +146,6 @@ class MinerCoordinator(DataUpdateCoordinator):
             "fan_sensors": {
                 idx: {"fan_speed": fan.speed} for idx, fan in enumerate(miner_data.fans)
             },
-            "config": miner_data.config
+            "config": miner_data.config,
         }
         return data

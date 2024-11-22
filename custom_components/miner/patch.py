@@ -1,11 +1,14 @@
+"""Path annoying home assistant dependency handling."""
 from __future__ import annotations
 
 import os
 import site
 import sys
-from subprocess import PIPE, Popen
+from subprocess import PIPE
+from subprocess import Popen
 
-from homeassistant.util.package import is_virtual_env, _LOGGER
+from homeassistant.util.package import _LOGGER
+from homeassistant.util.package import is_virtual_env
 
 _UV_ENV_PYTHON_VARS = (
     "UV_SYSTEM_PYTHON",
@@ -21,7 +24,6 @@ def install_package(
     timeout: int | None = None,
 ) -> bool:
     """Install a package on PyPi. Accepts pip compatible package strings.
-
 
     Return boolean if install successful.
     """
@@ -64,7 +66,6 @@ def install_package(
         # https://github.com/astral-sh/uv/issues/2077#issuecomment-2150406001
         args += ["--python", sys.executable, "--target", abs_target]
 
-
     _LOGGER.debug("Running uv pip command: args=%s", args)
     with Popen(
         args,
@@ -82,6 +83,5 @@ def install_package(
                 stderr.decode("utf-8").lstrip().strip(),
             )
             return False
-
 
     return True

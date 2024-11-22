@@ -1,15 +1,20 @@
+"""A selector for the miner's mining mode."""
 from __future__ import annotations
 
 from homeassistant.components.select import SelectEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import callback
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from pyasic import MinerConfig
-from pyasic.config.mining import MiningModeHPM, MiningModeNormal, MiningModeLPM
+from pyasic.config.mining import MiningModeHPM
+from pyasic.config.mining import MiningModeLPM
+from pyasic.config.mining import MiningModeNormal
 
-from custom_components.miner import MinerCoordinator, DOMAIN
+from custom_components.miner import DOMAIN
+from custom_components.miner import MinerCoordinator
 
 
 async def async_setup_entry(
@@ -27,7 +32,10 @@ async def async_setup_entry(
         created.add(key)
 
     await coordinator.async_config_entry_first_refresh()
-    if coordinator.miner.supports_power_modes and not coordinator.miner.supports_autotuning:
+    if (
+        coordinator.miner.supports_power_modes
+        and not coordinator.miner.supports_autotuning
+    ):
         async_add_entities(
             [
                 MinerPowerModeSwitch(
@@ -38,6 +46,8 @@ async def async_setup_entry(
 
 
 class MinerPowerModeSwitch(CoordinatorEntity[MinerCoordinator], SelectEntity):
+    """A selector for the miner's miner mode."""
+
     def __init__(
         self,
         coordinator: MinerCoordinator,
@@ -45,7 +55,6 @@ class MinerPowerModeSwitch(CoordinatorEntity[MinerCoordinator], SelectEntity):
         """Initialize the sensor."""
         super().__init__(coordinator=coordinator)
         self._attr_unique_id = f"{self.coordinator.data['mac']}-power-mode"
-
 
     @property
     def name(self) -> str | None:
@@ -65,17 +74,22 @@ class MinerPowerModeSwitch(CoordinatorEntity[MinerCoordinator], SelectEntity):
 
     @property
     def current_option(self) -> str | None:
+        """The current option selected with the select."""
         config: MinerConfig = self.coordinator.data["config"]
         return str(config.mining_mode.mode)
 
     @property
     def options(self) -> list[str]:
+        """The allowed options for the selector."""
         return ["Normal", "High", "Low"]
 
     async def async_select_option(self, option: str) -> None:
         """Change the selected option."""
-        option_map = {"High": MiningModeHPM, "Normal": MiningModeNormal, "Low": MiningModeLPM}
+        option_map = {
+            "High": MiningModeHPM,
+            "Normal": MiningModeNormal,
+            "Low": MiningModeLPM,
+        }
         cfg = await self.coordinator.miner.get_config()
         cfg.mining_mode = option_map[option]()
         await self.coordinator.miner.send_config(cfg)
-
