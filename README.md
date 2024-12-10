@@ -8,11 +8,33 @@
 [![Black][black-shield]][black]
 
 [![hacs][hacsbadge]][hacs]
-[![Project Maintenance][maintenance-shield]][user_profile]
+[![Project Maintenance][maintenance1-shield]][user1_profile]
+[![Project Maintenance][maintenance2-shield]][user2_profile]
 
-Control your Bitcoin miner from Home Assistant.
+Control and monitor your Bitcoin Miners from Home Assistant. 
 
-### [Supported miners are listed here](https://pyasic.readthedocs.io/en/latest/miners/supported_types/).
+Great for Heat Reusage, Solar Mining or any usecase where you don't need your miners running 24/7 or with a specific wattage.
+
+Works great in coordination with [ESPHome](https://www.home-assistant.io/integrations/esphome/) for Sensors (like temperature) and [Grafana](https://github.com/hassio-addons/addon-grafana) for Dashboards.
+
+### Support for:
+- Antminers
+- Whatsminers
+- Avalonminers
+- Innosilicons
+- Goldshells
+- Auradine
+- BitAxe
+- IceRiver
+- Hammer 
+- Braiins Firmware
+- Vnish Firmware
+- ePIC Firmware
+- HiveOS Firmware
+- LuxOS Firmware
+- Mara Firmware
+
+[Full list of supported miners](https://pyasic.readthedocs.io/en/latest/miners/supported_types/).
 
 **This component will set up the following platforms -**
 
@@ -33,9 +55,8 @@ Control your Bitcoin miner from Home Assistant.
 
 Use HACS, add the custom repo https://github.com/Schnitzel/hass-miner to it
 
-Installation and usage:
 
-[![Installation and usage](http://img.youtube.com/vi/eL83eYLbgQM/0.jpg)](https://www.youtube.com/watch?v=6HwSQag7NU8)
+[![Installation and usage Video](http://img.youtube.com/vi/eL83eYLbgQM/0.jpg)](https://www.youtube.com/watch?v=6HwSQag7NU8)
 
 ## Contributions are welcome!
 
@@ -66,9 +87,11 @@ Miner control and data is handled using [@UpstreamData](https://github.com/Upstr
 [forum-shield]: https://img.shields.io/badge/community-forum-brightgreen.svg?style=for-the-badge
 [forum]: https://community.home-assistant.io/
 [license-shield]: https://img.shields.io/github/license/Schnitzel/hass-miner.svg?style=for-the-badge
-[maintenance-shield]: https://img.shields.io/badge/maintainer-%40Schnitzel-blue.svg?style=for-the-badge
+[maintenance1-shield]: https://img.shields.io/badge/maintainer-%40Schnitzel-blue.svg?style=for-the-badge
+[maintenance2-shield]: https://img.shields.io/badge/maintainer-%40b--rowan-blue.svg?style=for-the-badge
 [pre-commit]: https://github.com/pre-commit/pre-commit
 [pre-commit-shield]: https://img.shields.io/badge/pre--commit-enabled-brightgreen?style=for-the-badge
 [releases-shield]: https://img.shields.io/github/release/Schnitzel/hass-miner.svg?style=for-the-badge
 [releases]: https://github.com/Schnitzel/hass-miner/releases
-[user_profile]: https://github.com/Schnitzel
+[user1_profile]: https://github.com/Schnitzel
+[user2_profile]: https://github.com/b-rowan
