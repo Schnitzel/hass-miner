@@ -21,7 +21,12 @@ from .const import DOMAIN
 from .coordinator import MinerCoordinator
 from .services import async_setup_services
 
-PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.SWITCH, Platform.NUMBER]
+PLATFORMS: list[Platform] = [
+    Platform.SENSOR,
+    Platform.SWITCH,
+    Platform.NUMBER,
+    Platform.SELECT,
+]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
