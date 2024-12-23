@@ -1,8 +1,8 @@
 [tool.poetry]
 name = "hass-miner"
-version = "0.1.0"
+version = "1.1.19"
 description = ""
-authors = ["Upstream Data <brett@upstreamdata.ca>"]
+authors = ["Michael Schmid <michael@amazee.com>"]
 readme = "README.md"
 package-mode = false
 
