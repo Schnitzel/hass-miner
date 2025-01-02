@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.components.sensor import SensorEntityDescription
 from homeassistant.components.sensor import SensorStateClass
+from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import REVOLUTIONS_PER_MINUTE
 from homeassistant.const import UnitOfPower
@@ -38,16 +39,21 @@ ENTITY_DESCRIPTION_KEY_MAP: dict[str, MinerSensorEntityDescription] = {
         key="Temperature",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.TEMPERATURE,
     ),
     "board_temperature": MinerSensorEntityDescription(
         key="Board Temperature",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.TEMPERATURE,
+
     ),
     "chip_temperature": MinerSensorEntityDescription(
         key="Chip Temperature",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.TEMPERATURE,
+
     ),
     "hashrate": MinerSensorEntityDescription(
         key="Hashrate",
