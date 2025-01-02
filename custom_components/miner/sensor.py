@@ -9,6 +9,7 @@ from homeassistant.components.sensor import SensorEntity
 from homeassistant.components.sensor import SensorEntityDescription
 from homeassistant.components.sensor import SensorStateClass
 from homeassistant.components.sensor import SensorDeviceClass
+from homeassistant.components.sensor import EntityCategory
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import REVOLUTIONS_PER_MINUTE
 from homeassistant.const import UnitOfPower
@@ -40,55 +41,63 @@ ENTITY_DESCRIPTION_KEY_MAP: dict[str, MinerSensorEntityDescription] = {
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.TEMPERATURE,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     "board_temperature": MinerSensorEntityDescription(
         key="Board Temperature",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.TEMPERATURE,
-
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     "chip_temperature": MinerSensorEntityDescription(
         key="Chip Temperature",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.TEMPERATURE,
-
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     "hashrate": MinerSensorEntityDescription(
         key="Hashrate",
         native_unit_of_measurement=TERA_HASH_PER_SECOND,
         state_class=SensorStateClass.MEASUREMENT,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     "ideal_hashrate": MinerSensorEntityDescription(
         key="Ideal Hashrate",
         native_unit_of_measurement=TERA_HASH_PER_SECOND,
         state_class=SensorStateClass.MEASUREMENT,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     "board_hashrate": MinerSensorEntityDescription(
         key="Board Hashrate",
         native_unit_of_measurement=TERA_HASH_PER_SECOND,
         state_class=SensorStateClass.MEASUREMENT,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     "power_limit": MinerSensorEntityDescription(
         key="Power Limit",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfPower.WATT,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     "miner_consumption": MinerSensorEntityDescription(
         key="Miner Consumption",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfPower.WATT,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     "efficiency": MinerSensorEntityDescription(
         key="Efficiency",
         native_unit_of_measurement=JOULES_PER_TERA_HASH,
         state_class=SensorStateClass.MEASUREMENT,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     "fan_speed": MinerSensorEntityDescription(
         key="Fan Speed",
         native_unit_of_measurement=REVOLUTIONS_PER_MINUTE,
         state_class=SensorStateClass.MEASUREMENT,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
 }
 
