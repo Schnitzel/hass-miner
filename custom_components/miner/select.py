@@ -1,6 +1,8 @@
 """A selector for the miner's mining mode."""
 from __future__ import annotations
 
+import logging
+
 from homeassistant.components.select import SelectEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import callback
@@ -15,6 +17,8 @@ from pyasic.config.mining import MiningModeNormal
 
 from custom_components.miner import DOMAIN
 from custom_components.miner import MinerCoordinator
+
+_LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(
@@ -76,7 +80,7 @@ class MinerPowerModeSwitch(CoordinatorEntity[MinerCoordinator], SelectEntity):
     def current_option(self) -> str | None:
         """The current option selected with the select."""
         config: MinerConfig = self.coordinator.data["config"]
-        return str(config.mining_mode.mode)
+        return str(config.mining_mode.mode).title()
 
     @property
     def options(self) -> list[str]:
