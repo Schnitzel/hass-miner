@@ -2,8 +2,6 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable
-from dataclasses import dataclass
 
 from homeassistant.components.sensor import EntityCategory
 from homeassistant.components.sensor import SensorDeviceClass
@@ -28,72 +26,68 @@ from .coordinator import MinerCoordinator
 _LOGGER = logging.getLogger(__name__)
 
 
-@dataclass
-class MinerSensorEntityDescription(SensorEntityDescription):
-    """Class describing ASIC Miner sensor entities."""
-
-    value: Callable = None
-
-
-ENTITY_DESCRIPTION_KEY_MAP: dict[str, MinerSensorEntityDescription] = {
-    "temperature": MinerSensorEntityDescription(
+ENTITY_DESCRIPTION_KEY_MAP: dict[str, SensorEntityDescription] = {
+    "temperature": SensorEntityDescription(
         key="Temperature",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        suggested_unit_of_measurement=UnitOfTemperature.CELSIUS,
         state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.TEMPERATURE,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
-    "board_temperature": MinerSensorEntityDescription(
+    "board_temperature": SensorEntityDescription(
         key="Board Temperature",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        suggested_unit_of_measurement=UnitOfTemperature.CELSIUS,
         state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.TEMPERATURE,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
-    "chip_temperature": MinerSensorEntityDescription(
+    "chip_temperature": SensorEntityDescription(
         key="Chip Temperature",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        suggested_unit_of_measurement=UnitOfTemperature.CELSIUS,
         state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.TEMPERATURE,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
-    "hashrate": MinerSensorEntityDescription(
+    "hashrate": SensorEntityDescription(
         key="Hashrate",
         native_unit_of_measurement=TERA_HASH_PER_SECOND,
         state_class=SensorStateClass.MEASUREMENT,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
-    "ideal_hashrate": MinerSensorEntityDescription(
+    "ideal_hashrate": SensorEntityDescription(
         key="Ideal Hashrate",
         native_unit_of_measurement=TERA_HASH_PER_SECOND,
         state_class=SensorStateClass.MEASUREMENT,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
-    "board_hashrate": MinerSensorEntityDescription(
+    "board_hashrate": SensorEntityDescription(
         key="Board Hashrate",
         native_unit_of_measurement=TERA_HASH_PER_SECOND,
         state_class=SensorStateClass.MEASUREMENT,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
-    "power_limit": MinerSensorEntityDescription(
+    "power_limit": SensorEntityDescription(
         key="Power Limit",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfPower.WATT,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
-    "miner_consumption": MinerSensorEntityDescription(
+    "miner_consumption": SensorEntityDescription(
         key="Miner Consumption",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfPower.WATT,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
-    "efficiency": MinerSensorEntityDescription(
+    "efficiency": SensorEntityDescription(
         key="Efficiency",
         native_unit_of_measurement=JOULES_PER_TERA_HASH,
         state_class=SensorStateClass.MEASUREMENT,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
-    "fan_speed": MinerSensorEntityDescription(
+    "fan_speed": SensorEntityDescription(
         key="Fan Speed",
         native_unit_of_measurement=REVOLUTIONS_PER_MINUTE,
         state_class=SensorStateClass.MEASUREMENT,
@@ -113,7 +107,7 @@ async def async_setup_entry(
     def _create_miner_entity(sensor: str) -> MinerSensor:
         """Create a miner sensor entity."""
         description = ENTITY_DESCRIPTION_KEY_MAP.get(
-            sensor, MinerSensorEntityDescription("base_sensor")
+            sensor, SensorEntityDescription(key="base_sensor")
         )
         return MinerSensor(
             coordinator=coordinator,
@@ -124,7 +118,7 @@ async def async_setup_entry(
     def _create_board_entity(board_num: int, sensor: str) -> MinerBoardSensor:
         """Create a board sensor entity."""
         description = ENTITY_DESCRIPTION_KEY_MAP.get(
-            sensor, MinerSensorEntityDescription("base_sensor")
+            sensor, SensorEntityDescription(key="base_sensor")
         )
         return MinerBoardSensor(
             coordinator=coordinator,
@@ -136,7 +130,7 @@ async def async_setup_entry(
     def _create_fan_entity(fan_num: int, sensor: str) -> MinerFanSensor:
         """Create a fan sensor entity."""
         description = ENTITY_DESCRIPTION_KEY_MAP.get(
-            sensor, MinerSensorEntityDescription("base_sensor")
+            sensor, SensorEntityDescription(key="base_sensor")
         )
         return MinerFanSensor(
             coordinator=coordinator,
@@ -162,13 +156,13 @@ async def async_setup_entry(
 class MinerSensor(CoordinatorEntity[MinerCoordinator], SensorEntity):
     """Defines a Miner Sensor."""
 
-    entity_description: MinerSensorEntityDescription
+    entity_description: SensorEntityDescription
 
     def __init__(
         self,
         coordinator: MinerCoordinator,
         sensor: str,
-        entity_description: MinerSensorEntityDescription,
+        entity_description: SensorEntityDescription,
     ) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator=coordinator)
@@ -214,14 +208,14 @@ class MinerSensor(CoordinatorEntity[MinerCoordinator], SensorEntity):
 class MinerBoardSensor(CoordinatorEntity[MinerCoordinator], SensorEntity):
     """Defines a Miner Board Sensor."""
 
-    entity_description: MinerSensorEntityDescription
+    entity_description: SensorEntityDescription
 
     def __init__(
         self,
         coordinator: MinerCoordinator,
         board_num: int,
         sensor: str,
-        entity_description: MinerSensorEntityDescription,
+        entity_description: SensorEntityDescription,
     ) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator=coordinator)
@@ -268,14 +262,14 @@ class MinerBoardSensor(CoordinatorEntity[MinerCoordinator], SensorEntity):
 class MinerFanSensor(CoordinatorEntity[MinerCoordinator], SensorEntity):
     """Defines a Miner Fan Sensor."""
 
-    entity_description: MinerSensorEntityDescription
+    entity_description: SensorEntityDescription
 
     def __init__(
         self,
         coordinator: MinerCoordinator,
         fan_num: int,
         sensor: str,
-        entity_description: MinerSensorEntityDescription,
+        entity_description: SensorEntityDescription,
     ) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator=coordinator)

@@ -2,10 +2,7 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable
-from dataclasses import dataclass
 
-from homeassistant.components.sensor import SensorEntityDescription
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import callback
@@ -18,13 +15,6 @@ from .const import DOMAIN
 from .coordinator import MinerCoordinator
 
 _LOGGER = logging.getLogger(__name__)
-
-
-@dataclass
-class MinerSensorEntityDescription(SensorEntityDescription):
-    """Class describing Miner sensor entities."""
-
-    value: Callable = None
 
 
 async def async_setup_entry(
