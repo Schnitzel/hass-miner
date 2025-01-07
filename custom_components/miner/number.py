@@ -2,12 +2,17 @@
 from __future__ import annotations
 
 import logging
+from importlib.metadata import version
+
+from .const import PYASIC_VERSION
 
 try:
     import pyasic
+
+    if not version("pyasic") == PYASIC_VERSION:
+        raise ImportError
 except ImportError:
     from .patch import install_package
-    from .const import PYASIC_VERSION
 
     install_package(f"pyasic=={PYASIC_VERSION}")
     import pyasic

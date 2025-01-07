@@ -11,13 +11,14 @@
 [![Project Maintenance][maintenance1-shield]][user1_profile]
 [![Project Maintenance][maintenance2-shield]][user2_profile]
 
-Control and monitor your Bitcoin Miners from Home Assistant. 
+Control and monitor your Bitcoin Miners from Home Assistant.
 
 Great for Heat Reusage, Solar Mining or any usecase where you don't need your miners running 24/7 or with a specific wattage.
 
 Works great in coordination with [ESPHome](https://www.home-assistant.io/integrations/esphome/) for Sensors (like temperature) and [Grafana](https://github.com/hassio-addons/addon-grafana) for Dashboards.
 
 ### Support for:
+
 - Antminers
 - Whatsminers
 - Avalonminers
@@ -26,7 +27,7 @@ Works great in coordination with [ESPHome](https://www.home-assistant.io/integra
 - Auradine
 - BitAxe
 - IceRiver
-- Hammer 
+- Hammer
 - Braiins Firmware
 - Vnish Firmware
 - ePIC Firmware
@@ -54,7 +55,6 @@ Works great in coordination with [ESPHome](https://www.home-assistant.io/integra
 ## Installation
 
 Use HACS, add the custom repo https://github.com/Schnitzel/hass-miner to it
-
 
 [![Installation and usage Video](http://img.youtube.com/vi/eL83eYLbgQM/0.jpg)](https://www.youtube.com/watch?v=6HwSQag7NU8)
 

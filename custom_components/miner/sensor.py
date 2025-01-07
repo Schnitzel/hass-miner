@@ -5,11 +5,11 @@ import logging
 from collections.abc import Callable
 from dataclasses import dataclass
 
+from homeassistant.components.sensor import EntityCategory
+from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.components.sensor import SensorEntityDescription
 from homeassistant.components.sensor import SensorStateClass
-from homeassistant.components.sensor import SensorDeviceClass
-from homeassistant.components.sensor import EntityCategory
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import REVOLUTIONS_PER_MINUTE
 from homeassistant.const import UnitOfPower

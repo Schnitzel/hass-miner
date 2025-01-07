@@ -1,15 +1,21 @@
 """Miner DataUpdateCoordinator."""
 import logging
 from datetime import timedelta
+from importlib.metadata import version
+
+from .const import PYASIC_VERSION
 
 try:
     import pyasic
+
+    if not version("pyasic") == PYASIC_VERSION:
+        raise ImportError
 except ImportError:
     from .patch import install_package
-    from .const import PYASIC_VERSION
 
     install_package(f"pyasic=={PYASIC_VERSION}")
     import pyasic
+
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.debounce import Debouncer

@@ -1,15 +1,21 @@
 """Config flow for Miner."""
 import logging
+from importlib.metadata import version
+
+from .const import PYASIC_VERSION
 
 try:
     import pyasic
+
+    if not version("pyasic") == PYASIC_VERSION:
+        raise ImportError
 except ImportError:
     from .patch import install_package
-    from .const import PYASIC_VERSION
 
     install_package(f"pyasic=={PYASIC_VERSION}")
     import pyasic
-    from pyasic import MinerNetwork
+
+from pyasic import MinerNetwork
 
 import voluptuous as vol
 from homeassistant import config_entries

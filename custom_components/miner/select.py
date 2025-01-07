@@ -2,6 +2,24 @@
 from __future__ import annotations
 
 import logging
+from importlib.metadata import version
+
+from .const import PYASIC_VERSION
+
+try:
+    import pyasic
+
+    if not version("pyasic") == PYASIC_VERSION:
+        raise ImportError
+except ImportError:
+    from .patch import install_package
+
+    install_package(f"pyasic=={PYASIC_VERSION}")
+    import pyasic
+
+from pyasic.config.mining import MiningModeHPM
+from pyasic.config.mining import MiningModeLPM
+from pyasic.config.mining import MiningModeNormal
 
 from homeassistant.components.select import SelectEntity
 from homeassistant.config_entries import ConfigEntry
@@ -10,10 +28,6 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
-from pyasic import MinerConfig
-from pyasic.config.mining import MiningModeHPM
-from pyasic.config.mining import MiningModeLPM
-from pyasic.config.mining import MiningModeNormal
 
 from custom_components.miner import DOMAIN
 from custom_components.miner import MinerCoordinator
@@ -79,7 +93,7 @@ class MinerPowerModeSwitch(CoordinatorEntity[MinerCoordinator], SelectEntity):
     @property
     def current_option(self) -> str | None:
         """The current option selected with the select."""
-        config: MinerConfig = self.coordinator.data["config"]
+        config: pyasic.MinerConfig = self.coordinator.data["config"]
         return str(config.mining_mode.mode).title()
 
     @property
