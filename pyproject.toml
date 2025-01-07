@@ -10,7 +10,7 @@ package-mode = false
 python = ">=3.12.0,<3.14"
 homeassistant = "^2025.1.1"
 colorlog = "^6.9.0"
-ruff = "^0.8.4"
+ruff = "^0.8.6"
 pyasic = "^0.68.5"
 setuptools = "^75.6.0"
 pre-commit = "^4.0.1"
