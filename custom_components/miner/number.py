@@ -17,6 +17,7 @@ except ImportError:
     install_package(f"pyasic=={PYASIC_VERSION}")
     import pyasic
 
+from homeassistant.components.number import NumberEntityDescription, NumberDeviceClass
 from homeassistant.components.number import NumberEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import callback
@@ -25,11 +26,23 @@ from homeassistant.helpers import device_registry
 from homeassistant.helpers import entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from homeassistant.components.sensor import EntityCategory
+from homeassistant.const import UnitOfPower
 
 from .const import DOMAIN
 from .coordinator import MinerCoordinator
 
 _LOGGER = logging.getLogger(__name__)
+
+
+NUMBER_DESCRIPTION_KEY_MAP: dict[str, NumberEntityDescription] = {
+    "power_limit": NumberEntityDescription(
+        key="Power Limit",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=NumberDeviceClass.POWER,
+        entity_category=EntityCategory.CONFIG,
+    )
+}
 
 
 async def async_setup_entry(
@@ -46,6 +59,7 @@ async def async_setup_entry(
             [
                 MinerPowerLimitNumber(
                     coordinator=coordinator,
+                    entity_description=NUMBER_DESCRIPTION_KEY_MAP["power_limit"],
                 )
             ]
         )
@@ -54,10 +68,13 @@ async def async_setup_entry(
 class MinerPowerLimitNumber(CoordinatorEntity[MinerCoordinator], NumberEntity):
     """Defines a Miner Number to set the Power Limit of the Miner."""
 
-    def __init__(self, coordinator: MinerCoordinator):
+    def __init__(
+        self, coordinator: MinerCoordinator, entity_description: NumberEntityDescription
+    ):
         """Initialize the PowerLimit entity."""
         super().__init__(coordinator=coordinator)
         self._attr_native_value = self.coordinator.data["miner_sensors"]["power_limit"]
+        self.entity_description = entity_description
 
     @property
     def name(self) -> str | None:
