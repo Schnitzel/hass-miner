@@ -13,7 +13,6 @@ from homeassistant.const import CONF_TYPE
 from homeassistant.core import Context
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import config_validation as cv
-from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.typing import ConfigType
 
 from .const import DOMAIN
@@ -28,7 +27,7 @@ ACTION_SCHEMA = cv.DEVICE_ACTION_BASE_SCHEMA.extend(
     {
         vol.Required(CONF_TYPE): vol.In(ACTION_TYPES),
         vol.Required(CONF_DOMAIN): DOMAIN,
-        vol.Required(CONF_ENTITY_ID): cv.entity_domain(DOMAIN),
+        vol.Required(CONF_DEVICE_ID): cv.entity_domain(DOMAIN),
     }
 )
 
@@ -44,32 +43,24 @@ async def async_get_actions(
     hass: HomeAssistant, device_id: str
 ) -> list[dict[str, str]]:
     """List device actions for Miner devices."""
-    registry = er.async_get(hass)
     actions = []
 
-    # Get all the integrations entities for this device
-    for entry in er.async_entries_for_device(registry, device_id):
-        if entry.domain != DOMAIN:
-            continue
-
-        # Add actions for each entity that belongs to this integration
-        base_action = {
-            CONF_DEVICE_ID: device_id,
-            CONF_DOMAIN: DOMAIN,
-            CONF_ENTITY_ID: entry.entity_id,
-        }
-        for action_type in ACTION_TYPES:
-            try:
-                actions.append(
-                    {
-                        **base_action,
-                        CONF_TYPE: action_type,
-                    }
-                )
-            except AttributeError:
-                _LOGGER.error(
-                    "Failed to add device command for miner: Unable to access entry data."
-                )
+    base_action = {
+        CONF_DEVICE_ID: device_id,
+        CONF_DOMAIN: DOMAIN,
+    }
+    for action_type in ACTION_TYPES:
+        try:
+            actions.append(
+                {
+                    **base_action,
+                    CONF_TYPE: action_type,
+                }
+            )
+        except AttributeError:
+            _LOGGER.error(
+                "Failed to add device command for miner: Unable to access entry data."
+            )
 
     return actions
 
