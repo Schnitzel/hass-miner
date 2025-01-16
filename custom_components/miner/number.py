@@ -110,7 +110,7 @@ class MinerPowerLimitNumber(CoordinatorEntity[MinerCoordinator], NumberEntity):
     @property
     def native_max_value(self) -> float | None:
         """Return device maximum value."""
-        return 5000
+        return 10000
 
     @property
     def native_step(self) -> float | None:
