@@ -180,6 +180,18 @@ class MinerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_title(self, user_input=None):
         """Get entity title."""
+        if self._miner.api is not None:
+            if self._miner.api.pwd is not None:
+                self._miner.api.pwd = self._data.get(CONF_RPC_PASSWORD, "")
+
+        if self._miner.web is not None:
+            self._miner.web.username = self._data.get(CONF_WEB_USERNAME, "")
+            self._miner.web.pwd = self._data.get(CONF_WEB_PASSWORD, "")
+
+        if self._miner.ssh is not None:
+            self._miner.ssh.username = self._data.get(CONF_SSH_USERNAME, "")
+            self._miner.ssh.pwd = self._data.get(CONF_SSH_PASSWORD, "")
+
         title = await self._miner.get_hostname()
 
         if user_input is None:
