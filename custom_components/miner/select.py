@@ -77,7 +77,7 @@ class MinerPowerModeSwitch(CoordinatorEntity[MinerCoordinator], SelectEntity):
     @property
     def name(self) -> str | None:
         """Return name of the entity."""
-        return f"{self.coordinator.entry.title} power mode"
+        return f"{self.coordinator.config_entry.title} power mode"
 
     @property
     def device_info(self) -> entity.DeviceInfo:
@@ -87,7 +87,7 @@ class MinerPowerModeSwitch(CoordinatorEntity[MinerCoordinator], SelectEntity):
             manufacturer=self.coordinator.data["make"],
             model=self.coordinator.data["model"],
             sw_version=self.coordinator.data["fw_ver"],
-            name=f"{self.coordinator.entry.title}",
+            name=f"{self.coordinator.config_entry.title}",
         )
 
     @property

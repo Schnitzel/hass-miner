@@ -59,7 +59,7 @@ class MinerActiveSwitch(CoordinatorEntity[MinerCoordinator], SwitchEntity):
     @property
     def name(self) -> str | None:
         """Return name of the entity."""
-        return f"{self.coordinator.entry.title} active"
+        return f"{self.coordinator.config_entry.title} active"
 
     @property
     def device_info(self) -> entity.DeviceInfo:
@@ -69,13 +69,13 @@ class MinerActiveSwitch(CoordinatorEntity[MinerCoordinator], SwitchEntity):
             manufacturer=self.coordinator.data["make"],
             model=self.coordinator.data["model"],
             sw_version=self.coordinator.data["fw_ver"],
-            name=f"{self.coordinator.entry.title}",
+            name=f"{self.coordinator.config_entry.title}",
         )
 
     async def async_turn_on(self) -> None:
         """Turn on miner."""
         miner = self.coordinator.miner
-        _LOGGER.debug(f"{self.coordinator.entry.title}: Resume mining.")
+        _LOGGER.debug(f"{self.coordinator.config_entry.title}: Resume mining.")
         if not miner.supports_shutdown:
             raise TypeError(f"{miner}: Shutdown not supported.")
         self._attr_is_on = True
@@ -90,7 +90,7 @@ class MinerActiveSwitch(CoordinatorEntity[MinerCoordinator], SwitchEntity):
     async def async_turn_off(self) -> None:
         """Turn off miner."""
         miner = self.coordinator.miner
-        _LOGGER.debug(f"{self.coordinator.entry.title}: Stop mining.")
+        _LOGGER.debug(f"{self.coordinator.config_entry.title}: Stop mining.")
         if not miner.supports_shutdown:
             raise TypeError(f"{miner}: Shutdown not supported.")
         if miner.supports_power_modes:

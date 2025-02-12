@@ -42,11 +42,11 @@ class MinerCoordinator(DataUpdateCoordinator):
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
         """Initialize MinerCoordinator object."""
-        self.entry = entry
         self.miner = None
         super().__init__(
             hass=hass,
             logger=_LOGGER,
+            config_entry=entry,
             name=entry.title,
             update_interval=timedelta(seconds=10),
             request_refresh_debouncer=Debouncer(
@@ -64,7 +64,7 @@ class MinerCoordinator(DataUpdateCoordinator):
 
     async def get_miner(self):
         """Get a valid Miner instance."""
-        miner_ip = self.entry.data[CONF_IP]
+        miner_ip = self.config_entry.data[CONF_IP]
         miner = await pyasic.get_miner(miner_ip)
         if miner is None:
             return None
@@ -72,15 +72,15 @@ class MinerCoordinator(DataUpdateCoordinator):
         self.miner = miner
         if self.miner.api is not None:
             if self.miner.api.pwd is not None:
-                self.miner.api.pwd = self.entry.data.get(CONF_RPC_PASSWORD, "")
+                self.miner.api.pwd = self.config_entry.data.get(CONF_RPC_PASSWORD, "")
 
         if self.miner.web is not None:
-            self.miner.web.username = self.entry.data.get(CONF_WEB_USERNAME, "")
-            self.miner.web.pwd = self.entry.data.get(CONF_WEB_PASSWORD, "")
+            self.miner.web.username = self.config_entry.data.get(CONF_WEB_USERNAME, "")
+            self.miner.web.pwd = self.config_entry.data.get(CONF_WEB_PASSWORD, "")
 
         if self.miner.ssh is not None:
-            self.miner.ssh.username = self.entry.data.get(CONF_SSH_USERNAME, "")
-            self.miner.ssh.pwd = self.entry.data.get(CONF_SSH_PASSWORD, "")
+            self.miner.ssh.username = self.config_entry.data.get(CONF_SSH_USERNAME, "")
+            self.miner.ssh.pwd = self.config_entry.data.get(CONF_SSH_PASSWORD, "")
         return self.miner
 
     async def _async_update_data(self):

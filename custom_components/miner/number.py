@@ -79,7 +79,7 @@ class MinerPowerLimitNumber(CoordinatorEntity[MinerCoordinator], NumberEntity):
     @property
     def name(self) -> str | None:
         """Return name of the entity."""
-        return f"{self.coordinator.entry.title} Power Limit"
+        return f"{self.coordinator.config_entry.title} Power Limit"
 
     @property
     def device_info(self) -> entity.DeviceInfo:
@@ -94,7 +94,7 @@ class MinerPowerLimitNumber(CoordinatorEntity[MinerCoordinator], NumberEntity):
             manufacturer=self.coordinator.data["make"],
             model=self.coordinator.data["model"],
             sw_version=self.coordinator.data["fw_ver"],
-            name=f"{self.coordinator.entry.title}",
+            name=f"{self.coordinator.config_entry.title}",
         )
 
     @property
@@ -128,11 +128,13 @@ class MinerPowerLimitNumber(CoordinatorEntity[MinerCoordinator], NumberEntity):
         miner = self.coordinator.miner
 
         _LOGGER.debug(
-            f"{self.coordinator.entry.title}: setting power limit to {value}."
+            f"{self.coordinator.config_entry.title}: setting power limit to {value}."
         )
 
         if not miner.supports_autotuning:
-            raise TypeError(f"{self.coordinator.entry.title}: Tuning not supported.")
+            raise TypeError(
+                f"{self.coordinator.config_entry.title}: Tuning not supported."
+            )
 
         result = await miner.set_power_limit(int(value))
 
