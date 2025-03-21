@@ -27,6 +27,8 @@ from homeassistant.helpers.selector import TextSelectorConfig
 from homeassistant.helpers.selector import TextSelectorType
 
 from .const import CONF_IP
+from .const import CONF_MIN_POWER
+from .const import CONF_MAX_POWER
 from .const import CONF_RPC_PASSWORD
 from .const import CONF_SSH_PASSWORD
 from .const import CONF_SSH_USERNAME
@@ -85,7 +87,15 @@ class MinerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             user_input = {}
 
         schema = vol.Schema(
-            {vol.Required(CONF_IP, default=user_input.get(CONF_IP, "")): str}
+            {
+                vol.Required(CONF_IP, default=user_input.get(CONF_IP, "")): str,
+                vol.Optional(CONF_MIN_POWER, default=100): vol.All(
+                    vol.Coerce(int), vol.Range(min=100, max=10000)
+                ),
+                vol.Optional(CONF_MAX_POWER, default=10000): vol.All(
+                    vol.Coerce(int), vol.Range(min=100, max=10000)
+                ),
+            }
         )
 
         if not user_input:

@@ -4,7 +4,9 @@
     "step": {
       "user": {
         "data": {
-          "ip": "IP Address"
+          "ip": "IP Address",
+          "min_power": "Min Power (W)",
+          "max_power": "Max Power (W)"
         }
       },
       "login": {

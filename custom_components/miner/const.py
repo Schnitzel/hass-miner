@@ -9,6 +9,8 @@ CONF_SSH_USERNAME = "ssh_username"
 CONF_RPC_PASSWORD = "rpc_password"
 CONF_WEB_PASSWORD = "web_password"
 CONF_WEB_USERNAME = "web_username"
+CONF_MIN_POWER = "min_power"
+CONF_MAX_POWER = "max_power"
 
 SERVICE_REBOOT = "reboot"
 SERVICE_RESTART_BACKEND = "restart_backend"

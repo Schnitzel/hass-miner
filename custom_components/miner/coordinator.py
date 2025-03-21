@@ -23,6 +23,8 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.helpers.update_coordinator import UpdateFailed
 
 from .const import CONF_IP
+from .const import CONF_MIN_POWER
+from .const import CONF_MAX_POWER
 from .const import CONF_RPC_PASSWORD
 from .const import CONF_SSH_PASSWORD
 from .const import CONF_SSH_USERNAME
@@ -153,5 +155,9 @@ class MinerCoordinator(DataUpdateCoordinator):
                 idx: {"fan_speed": fan.speed} for idx, fan in enumerate(miner_data.fans)
             },
             "config": miner_data.config,
+            "power_limit_range": {
+                "min": self.config_entry.data.get(CONF_MIN_POWER, 100),
+                "max": self.config_entry.data.get(CONF_MAX_POWER, 10000),
+            },
         }
         return data
