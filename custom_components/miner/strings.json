@@ -4,7 +4,9 @@
     "step": {
       "user": {
         "data": {
-          "ip": "[%key:common::config_flow::data::ip%]"
+          "ip": "[%key:common::config_flow::data::ip%]",
+          "min_power": "[%key:common::config_flow::data::min_power%]",
+          "max_power": "[%key:common::config_flow::data::max_power%]"
         }
       },
       "login": {
