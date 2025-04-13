@@ -10,6 +10,6 @@
   "issue_tracker": "https://github.com/Schnitzel/hass-miner/issues",
   "requirements": [],
   "ssdp": [],
-  "version": "1.2.2",
+  "version": "1.2.3",
   "zeroconf": []
 }
