@@ -11,7 +11,7 @@ python = ">=3.13.0,<3.14"
 homeassistant = "^2025.2.3"
 colorlog = "^6.9.0"
 ruff = "^0.8.4"
-pyasic = "^0.72.1"
+pyasic = "^0.72.9"
 setuptools = "^75.6.0"
 pre-commit = "^4.0.1"
 
