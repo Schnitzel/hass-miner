@@ -138,6 +138,7 @@ class MinerCoordinator(DataUpdateCoordinator):
             "miner_sensors": {
                 "hashrate": hashrate,
                 "ideal_hashrate": expected_hashrate,
+                "active_preset_name": miner_data.config.mining_mode.active_preset.name,
                 "temperature": miner_data.temperature_avg,
                 "power_limit": miner_data.wattage_limit,
                 "miner_consumption": miner_data.wattage,

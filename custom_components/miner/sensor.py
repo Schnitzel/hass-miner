@@ -63,6 +63,11 @@ ENTITY_DESCRIPTION_KEY_MAP: dict[str, SensorEntityDescription] = {
         state_class=SensorStateClass.MEASUREMENT,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
+    "active_preset_name": SensorEntityDescription(
+        key="Active Preset Name",
+        device_class=SensorDeviceClass.ENUM,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
     "board_hashrate": SensorEntityDescription(
         key="Board Hashrate",
         native_unit_of_measurement=TERA_HASH_PER_SECOND,
