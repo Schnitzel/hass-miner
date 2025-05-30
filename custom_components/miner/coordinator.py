@@ -87,15 +87,44 @@ class MinerCoordinator(DataUpdateCoordinator):
 
     async def _async_update_data(self):
         """Fetch sensors from miners."""
+
+        # Track failures locally to decide whether to raise or just return fallback
+        if not hasattr(self, "_failure_count"):
+            self._failure_count = 0
+
         miner = await self.get_miner()
 
         if miner is None:
-            raise UpdateFailed("Miner Offline")
+            self._failure_count += 1
 
+            if self._failure_count == 1:
+                _LOGGER.warning("Miner is offline – returning zeroed data (first failure).")
+                return {
+                    "hostname": None, "mac": None, "make": None, "model": None, "ip": None,
+                    "is_mining": False, "fw_ver": None,
+                    "miner_sensors": {
+                        "hashrate": 0,
+                        "ideal_hashrate": 0,
+                        "temperature": 0,
+                        "power_limit": 0,
+                        "miner_consumption": 0,
+                        "efficiency": 0,
+                    },
+                    "board_sensors": {},
+                    "fan_sensors": {},
+                    "config": {},
+                    "power_limit_range": {
+                        "min": self.config_entry.data.get(CONF_MIN_POWER, 100),
+                        "max": self.config_entry.data.get(CONF_MAX_POWER, 10000),
+                    },
+                }
+
+            raise UpdateFailed("Miner Offline (consecutive failure)")
+
+        # At this point, miner is valid
         _LOGGER.debug(f"Found miner: {self.miner}")
 
         try:
-
             miner_data = await self.miner.get_data(
                 include=[
                     pyasic.DataOptions.HOSTNAME,
@@ -112,10 +141,37 @@ class MinerCoordinator(DataUpdateCoordinator):
                 ]
             )
         except Exception as err:
+            self._failure_count += 1
+
+            if self._failure_count == 1:
+                _LOGGER.warning(f"Error fetching miner data: {err} – returning zeroed data (first failure).")
+                return {
+                    "hostname": None, "mac": None, "make": None, "model": None, "ip": None,
+                    "is_mining": False, "fw_ver": None,
+                    "miner_sensors": {
+                        "hashrate": 0,
+                        "ideal_hashrate": 0,
+                        "temperature": 0,
+                        "power_limit": 0,
+                        "miner_consumption": 0,
+                        "efficiency": 0,
+                    },
+                    "board_sensors": {},
+                    "fan_sensors": {},
+                    "config": {},
+                    "power_limit_range": {
+                        "min": self.config_entry.data.get(CONF_MIN_POWER, 100),
+                        "max": self.config_entry.data.get(CONF_MAX_POWER, 10000),
+                    },
+                }
+
             _LOGGER.exception(err)
             raise UpdateFailed from err
 
         _LOGGER.debug(f"Got data: {miner_data}")
+
+        # Success: reset the failure count
+        self._failure_count = 0
 
         try:
             hashrate = round(float(miner_data.hashrate), 2)
@@ -138,11 +194,10 @@ class MinerCoordinator(DataUpdateCoordinator):
             "miner_sensors": {
                 "hashrate": hashrate,
                 "ideal_hashrate": expected_hashrate,
-                "active_preset_name": miner_data.config.mining_mode.active_preset.name,
                 "temperature": miner_data.temperature_avg,
                 "power_limit": miner_data.wattage_limit,
                 "miner_consumption": miner_data.wattage,
-                "efficiency": miner_data.efficiency_fract,
+                "efficiency": miner_data.efficiency,
             },
             "board_sensors": {
                 board.slot: {
@@ -162,3 +217,4 @@ class MinerCoordinator(DataUpdateCoordinator):
             },
         }
         return data
+
