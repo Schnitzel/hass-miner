@@ -36,6 +36,27 @@ _LOGGER = logging.getLogger(__name__)
 # Matches iotwatt data log interval
 REQUEST_REFRESH_DEFAULT_COOLDOWN = 5
 
+DEFAULT_DATA = {
+    "hostname": None,
+    "mac": None,
+    "make": None,
+    "model": None,
+    "ip": None,
+    "is_mining": False,
+    "fw_ver": None,
+    "miner_sensors": {
+        "hashrate": 0,
+        "ideal_hashrate": 0,
+        "temperature": 0,
+        "power_limit": 0,
+        "miner_consumption": 0,
+        "efficiency": 0,
+    },
+    "board_sensors": {},
+    "fan_sensors": {},
+    "config": {},
+}
+
 
 class MinerCoordinator(DataUpdateCoordinator):
     """Class to manage fetching update data from the Miner."""
@@ -45,6 +66,7 @@ class MinerCoordinator(DataUpdateCoordinator):
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
         """Initialize MinerCoordinator object."""
         self.miner = None
+        self._failure_count = 0
         super().__init__(
             hass=hass,
             logger=_LOGGER,
@@ -88,31 +110,17 @@ class MinerCoordinator(DataUpdateCoordinator):
     async def _async_update_data(self):
         """Fetch sensors from miners."""
 
-        # Track failures locally to decide whether to raise or just return fallback
-        if not hasattr(self, "_failure_count"):
-            self._failure_count = 0
-
         miner = await self.get_miner()
 
         if miner is None:
             self._failure_count += 1
 
             if self._failure_count == 1:
-                _LOGGER.warning("Miner is offline – returning zeroed data (first failure).")
+                _LOGGER.warning(
+                    "Miner is offline – returning zeroed data (first failure)."
+                )
                 return {
-                    "hostname": None, "mac": None, "make": None, "model": None, "ip": None,
-                    "is_mining": False, "fw_ver": None,
-                    "miner_sensors": {
-                        "hashrate": 0,
-                        "ideal_hashrate": 0,
-                        "temperature": 0,
-                        "power_limit": 0,
-                        "miner_consumption": 0,
-                        "efficiency": 0,
-                    },
-                    "board_sensors": {},
-                    "fan_sensors": {},
-                    "config": {},
+                    **DEFAULT_DATA,
                     "power_limit_range": {
                         "min": self.config_entry.data.get(CONF_MIN_POWER, 100),
                         "max": self.config_entry.data.get(CONF_MAX_POWER, 10000),
@@ -144,21 +152,11 @@ class MinerCoordinator(DataUpdateCoordinator):
             self._failure_count += 1
 
             if self._failure_count == 1:
-                _LOGGER.warning(f"Error fetching miner data: {err} – returning zeroed data (first failure).")
+                _LOGGER.warning(
+                    f"Error fetching miner data: {err} – returning zeroed data (first failure)."
+                )
                 return {
-                    "hostname": None, "mac": None, "make": None, "model": None, "ip": None,
-                    "is_mining": False, "fw_ver": None,
-                    "miner_sensors": {
-                        "hashrate": 0,
-                        "ideal_hashrate": 0,
-                        "temperature": 0,
-                        "power_limit": 0,
-                        "miner_consumption": 0,
-                        "efficiency": 0,
-                    },
-                    "board_sensors": {},
-                    "fan_sensors": {},
-                    "config": {},
+                    **DEFAULT_DATA,
                     "power_limit_range": {
                         "min": self.config_entry.data.get(CONF_MIN_POWER, 100),
                         "max": self.config_entry.data.get(CONF_MAX_POWER, 10000),
@@ -217,4 +215,3 @@ class MinerCoordinator(DataUpdateCoordinator):
             },
         }
         return data
-

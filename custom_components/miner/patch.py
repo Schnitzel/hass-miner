@@ -15,6 +15,7 @@ _UV_ENV_PYTHON_VARS = (
     "UV_PYTHON",
 )
 
+
 # Copy-paste of home assistant core install, but pre-releases are supported
 def install_package(
     package: str,
