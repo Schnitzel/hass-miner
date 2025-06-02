@@ -47,10 +47,11 @@ DEFAULT_DATA = {
     "miner_sensors": {
         "hashrate": 0,
         "ideal_hashrate": 0,
+        "active_preset_name": None,
         "temperature": 0,
         "power_limit": 0,
         "miner_consumption": 0,
-        "efficiency": 0,
+        "efficiency": 0.0,
     },
     "board_sensors": {},
     "fan_sensors": {},
@@ -192,10 +193,11 @@ class MinerCoordinator(DataUpdateCoordinator):
             "miner_sensors": {
                 "hashrate": hashrate,
                 "ideal_hashrate": expected_hashrate,
+                "active_preset_name": miner_data.config.mining_mode.active_preset.name,
                 "temperature": miner_data.temperature_avg,
                 "power_limit": miner_data.wattage_limit,
                 "miner_consumption": miner_data.wattage,
-                "efficiency": miner_data.efficiency,
+                "efficiency": miner_data.efficiency_fract,
             },
             "board_sensors": {
                 board.slot: {
