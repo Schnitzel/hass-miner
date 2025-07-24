@@ -7,13 +7,13 @@ readme = "README.md"
 package-mode = false
 
 [tool.poetry.dependencies]
-python = ">=3.13.0,<3.14"
-homeassistant = "^2025.2.3"
+python = ">=3.13.2.0,<3.14"
+homeassistant = "^2025.7.3"
 colorlog = "^6.9.0"
-ruff = "^0.8.4"
-pyasic = "^0.72.9"
-setuptools = "^75.6.0"
-pre-commit = "^4.0.1"
+ruff = "^0.12.5"
+pyasic = "^0.74.0"
+setuptools = "^80.9.0"
+pre-commit = "^4.2.0"
 
 
 [build-system]

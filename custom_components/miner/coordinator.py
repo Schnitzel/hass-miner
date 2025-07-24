@@ -182,6 +182,11 @@ class MinerCoordinator(DataUpdateCoordinator):
         except TypeError:
             expected_hashrate = None
 
+        try:
+            active_preset = miner_data.config.mining_mode.active_preset.name
+        except AttributeError:
+            active_preset = None
+
         data = {
             "hostname": miner_data.hostname,
             "mac": miner_data.mac,
@@ -193,7 +198,7 @@ class MinerCoordinator(DataUpdateCoordinator):
             "miner_sensors": {
                 "hashrate": hashrate,
                 "ideal_hashrate": expected_hashrate,
-                "active_preset_name": miner_data.config.mining_mode.active_preset.name,
+                "active_preset_name": active_preset,
                 "temperature": miner_data.temperature_avg,
                 "power_limit": miner_data.wattage_limit,
                 "miner_consumption": miner_data.wattage,
