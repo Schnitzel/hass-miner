@@ -1,7 +1,23 @@
 reboot:
-  target:
-    device:
+  name: Reboot
+  description: Reboots the miner device
+  fields:
+    device_id:
+      name: Device
+      description: The miner device to reboot
+      required: true
+      selector:
+        device:
+          integration: miner
 
 restart_backendthe:
-  target:
-    device:
+  name: Restart Backend
+  description: Restarts the backend of the miner device
+  fields:
+    device_id:
+      name: Device
+      description: The miner device to restart
+      required: true
+      selector:
+        device:
+          integration: miner
