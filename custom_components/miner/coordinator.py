@@ -123,7 +123,7 @@ class MinerCoordinator(DataUpdateCoordinator):
                 return {
                     **DEFAULT_DATA,
                     "power_limit_range": {
-                        "min": self.config_entry.data.get(CONF_MIN_POWER, 100),
+                        "min": self.config_entry.data.get(CONF_MIN_POWER, 15),
                         "max": self.config_entry.data.get(CONF_MAX_POWER, 10000),
                     },
                 }
@@ -159,7 +159,7 @@ class MinerCoordinator(DataUpdateCoordinator):
                 return {
                     **DEFAULT_DATA,
                     "power_limit_range": {
-                        "min": self.config_entry.data.get(CONF_MIN_POWER, 100),
+                        "min": self.config_entry.data.get(CONF_MIN_POWER, 15),
                         "max": self.config_entry.data.get(CONF_MAX_POWER, 10000),
                     },
                 }
@@ -217,7 +217,7 @@ class MinerCoordinator(DataUpdateCoordinator):
             },
             "config": miner_data.config,
             "power_limit_range": {
-                "min": self.config_entry.data.get(CONF_MIN_POWER, 100),
+                "min": self.config_entry.data.get(CONF_MIN_POWER, 15),
                 "max": self.config_entry.data.get(CONF_MAX_POWER, 10000),
             },
         }
