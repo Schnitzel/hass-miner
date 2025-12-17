@@ -1,9 +1,7 @@
 reboot:
   target:
     device:
-    device_id: {}
 
-restart_backendThe:
+restart_backendthe:
   target:
     device:
-    device_id: is {}
