@@ -16,6 +16,7 @@ except ImportError:
     import pyasic
 
 from pyasic import MinerNetwork
+from pyasic.device.makes import MinerMake
 
 import voluptuous as vol
 from homeassistant import config_entries
@@ -116,6 +117,10 @@ class MinerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Get miner login credentials."""
         if user_input is None:
             user_input = {}
+
+        # Detect BitAxe miners and skip credential prompts
+        if self._miner.make == MinerMake.BITAXE:
+            return await self.async_step_title()
 
         schema_data = {}
 
