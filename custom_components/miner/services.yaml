@@ -10,18 +10,40 @@ reboot:
       selector:
         device:
           integration: miner
-          multiple:  true
+          multiple: true
 
 restart_backend:
-  name:  Restart mining on miner
+  name: Restart mining on miner
   description: Restarts the mining process on a miner.
   fields:
     device_id:
       name: Device
-      description:  The miner device to restart.
+      description: The miner device to restart.
       required: true
-      example:  "a1b2c3d4e5f6g7h8i9j0"
+      example: "a1b2c3d4e5f6g7h8i9j0"
       selector:
         device:
           integration: miner
-          multiple:  true
+          multiple: true
+
+set_work_mode:
+  name: Set work mode on miner
+  description: Sets the work mode on a miner.
+  fields:
+    device_id:
+      name: Device
+      description: The miner device to change work mode.
+      required: true
+      selector:
+        device:
+          integration: miner
+    mode:
+      required: true
+      example: "low"
+      default: "high"
+      selector:
+        select:
+          options:
+            - "low"
+            - "normal"
+            - "high"
