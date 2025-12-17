@@ -25,3 +25,19 @@ restart_backend:
         device:
           integration: miner
           multiple:  true
+
+set_work_mode:
+  target:
+    device:
+      integration: miner
+  fields:
+    mode:
+      required: true
+      example: "low"
+      default: "high"
+      selector:
+        select:
+          options:
+            - "low"
+            - "medium"
+            - "high"

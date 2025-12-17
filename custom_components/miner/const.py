@@ -14,6 +14,7 @@ CONF_MAX_POWER = "max_power"
 
 SERVICE_REBOOT = "reboot"
 SERVICE_RESTART_BACKEND = "restart_backend"
+SERVICE_SET_WORK_MODE = "set_work_mode"
 
 TERA_HASH_PER_SECOND = "TH/s"
 JOULES_PER_TERA_HASH = "J/TH"
