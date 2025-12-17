@@ -1,9 +1,9 @@
 reboot:
   target:
     device:
-      integration: miner
+    device_id: {}
 
-restart_backend:
+restart_backendThe:
   target:
     device:
-      integration: miner
+    device_id: is {}
