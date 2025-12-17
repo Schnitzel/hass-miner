@@ -7,7 +7,6 @@ import voluptuous as vol
 from homeassistant.components.device_automation import async_validate_entity_schema
 from homeassistant.const import CONF_DEVICE_ID
 from homeassistant.const import CONF_DOMAIN
-from homeassistant.const import CONF_ENTITY_ID
 from homeassistant.const import CONF_TYPE
 from homeassistant.core import Context
 from homeassistant.core import HomeAssistant
