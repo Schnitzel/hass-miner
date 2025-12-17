@@ -1,8 +1,8 @@
 """Lightweight test for `set_work_mode` device action."""
-
 import asyncio
 
 from custom_components.miner.device_action import async_call_action_from_config
+
 
 class FakeServices:
     """Fake Home Assistant services registry capturing service calls."""
@@ -11,15 +11,20 @@ class FakeServices:
         """Initialize the fake services store."""
         self.calls = []
 
-    async def async_call(self, domain, service, service_data, blocking=True, context=None):
+    async def async_call(
+        self, domain, service, service_data, blocking=True, context=None
+    ):
         """Record an async service call with its parameters."""
-        self.calls.append({
-            "domain": domain,
-            "service": service,
-            "service_data": service_data,
-            "blocking": blocking,
-            "context": context,
-        })
+        self.calls.append(
+            {
+                "domain": domain,
+                "service": service,
+                "service_data": service_data,
+                "blocking": blocking,
+                "context": context,
+            }
+        )
+
 
 class FakeHass:
     """Fake Home Assistant core object exposing `services`."""
@@ -28,6 +33,7 @@ class FakeHass:
         """Initialize the fake hass container with services."""
         self.services = FakeServices()
 
+
 async def main():
     """Run a simple assertion flow to validate service call building."""
     hass = FakeHass()
@@ -35,7 +41,7 @@ async def main():
         "type": "set_work_mode",
         "domain": "miner",
         "device_id": "device-123",
-        "mode": "medium",
+        "mode": "normal",
     }
     variables = {}
     context = None
@@ -47,7 +53,8 @@ async def main():
     assert call["domain"] == "miner"
     assert call["service"] == "set_work_mode"
     assert call["service_data"]["device_id"] == ["device-123"]
-    assert call["service_data"]["mode"] == "medium"
+    assert call["service_data"]["mode"] == "normal"
+
 
 if __name__ == "__main__":
     asyncio.run(main())

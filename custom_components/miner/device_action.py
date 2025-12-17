@@ -29,7 +29,7 @@ ACTION_SCHEMA = cv.DEVICE_ACTION_BASE_SCHEMA.extend(
         # Device actions operate on device registry IDs, not entity IDs
         vol.Required(CONF_DEVICE_ID): str,
         # For set_work_mode, accept a mode; default aligns with services.yaml
-        vol.Optional("mode", default="high"): vol.In(["low", "medium", "high"]),
+        vol.Optional("mode", default="high"): vol.In(["low", "normal", "high"]),
     }
 )
 

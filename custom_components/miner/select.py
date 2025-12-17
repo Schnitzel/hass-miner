@@ -17,20 +17,15 @@ except ImportError:
     install_package(f"pyasic=={PYASIC_VERSION}")
     import pyasic
 
-from pyasic.config.mining import MiningModeHPM
-from pyasic.config.mining import MiningModeLPM
-from pyasic.config.mining import MiningModeNormal
-
 from homeassistant.components.select import SelectEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import callback
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from pyasic.config.mining import MiningModeHPM, MiningModeLPM, MiningModeNormal
 
-from custom_components.miner import DOMAIN
-from custom_components.miner import MinerCoordinator
+from custom_components.miner import DOMAIN, MinerCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
