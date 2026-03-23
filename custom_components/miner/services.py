@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from importlib.metadata import version
 
 from homeassistant.const import CONF_DEVICE_ID
 from homeassistant.core import HomeAssistant
@@ -13,21 +12,9 @@ from homeassistant.helpers.device_registry import (
 )
 
 from .const import DOMAIN
-from .const import PYASIC_VERSION
 from .const import SERVICE_REBOOT
 from .const import SERVICE_RESTART_BACKEND
 from .const import SERVICE_SET_WORK_MODE
-
-# Ensure the expected pyasic version is available, importing MiningModeConfig
-try:
-    if version("pyasic") != PYASIC_VERSION:
-        raise ImportError
-    from pyasic.config.mining import MiningModeConfig  # type: ignore
-except Exception:  # pragma: no cover - handled by dynamic install
-    from .patch import install_package
-
-    install_package(f"pyasic=={PYASIC_VERSION}")
-    from pyasic.config.mining import MiningModeConfig  # type: ignore
 
 LOGGER = logging.getLogger(__name__)
 
@@ -69,6 +56,9 @@ async def async_setup_services(hass: HomeAssistant) -> None:
     hass.services.async_register(DOMAIN, SERVICE_RESTART_BACKEND, restart_backend)
 
     async def set_work_mode(call: ServiceCall) -> None:
+        # Lazy import to avoid blocking at module load time
+        from pyasic.config.mining import MiningModeConfig
+
         miners = await get_miners(call)
         if len(miners) > 0:
             mode = call.data["mode"]
