@@ -2,19 +2,9 @@
 from __future__ import annotations
 
 import logging
-from importlib.metadata import version
+from typing import TYPE_CHECKING
 
-from .const import PYASIC_VERSION
-
-try:
-    import pyasic
-
-    if not version("pyasic") == PYASIC_VERSION:
-        raise ImportError
-except ImportError:
-    from .patch import install_package
-
-    install_package(f"pyasic=={PYASIC_VERSION}")
+if TYPE_CHECKING:
     import pyasic
 
 from homeassistant.components.number import NumberEntityDescription, NumberDeviceClass
@@ -124,6 +114,7 @@ class MinerPowerLimitNumber(CoordinatorEntity[MinerCoordinator], NumberEntity):
 
     async def async_set_native_value(self, value):
         """Update the current value."""
+        import pyasic  # lazy import to avoid blocking event loop
 
         miner = self.coordinator.miner
 

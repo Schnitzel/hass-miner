@@ -1,15 +1,7 @@
 """The Miner integration."""
 from __future__ import annotations
 
-
-try:
-    import pyasic
-except ImportError:
-    from .patch import install_package
-    from .const import PYASIC_VERSION
-
-    install_package(f"pyasic=={PYASIC_VERSION}")
-    import pyasic
+import sys
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
@@ -18,8 +10,7 @@ from homeassistant.exceptions import ConfigEntryNotReady
 
 from .const import CONF_IP
 from .const import DOMAIN
-from .coordinator import MinerCoordinator
-from .services import async_setup_services
+from .const import PYASIC_VERSION
 
 PLATFORMS: list[Platform] = [
     Platform.SENSOR,
@@ -29,8 +20,48 @@ PLATFORMS: list[Platform] = [
 ]
 
 
+def _ensure_pyasic():
+    """Ensure pyasic is installed and imported (runs in executor)."""
+    import importlib
+
+    def try_import():
+        try:
+            from importlib.metadata import version
+            import pyasic
+            # Verify the module actually loaded correctly
+            if not hasattr(pyasic, "get_miner"):
+                raise ImportError("pyasic module incomplete")
+            if version("pyasic") != PYASIC_VERSION:
+                raise ImportError("Version mismatch")
+            return pyasic
+        except Exception:
+            return None
+
+    pyasic = try_import()
+    if pyasic:
+        return pyasic
+
+    # Need to install/reinstall
+    from .patch import install_package
+    install_package(f"pyasic=={PYASIC_VERSION}", force_reinstall=True)
+
+    # Clear any cached broken imports
+    for mod_name in list(sys.modules.keys()):
+        if mod_name.startswith("pyasic"):
+            del sys.modules[mod_name]
+
+    import pyasic
+    return pyasic
+
+
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
     """Set up Miner from a config entry."""
+    # Import pyasic in executor to avoid blocking the event loop
+    pyasic = await hass.async_add_executor_job(_ensure_pyasic)
+
+    # Import coordinator and services AFTER pyasic is installed
+    from .coordinator import MinerCoordinator
+    from .services import async_setup_services
 
     miner_ip = config_entry.data[CONF_IP]
     miner = await pyasic.get_miner(miner_ip)
