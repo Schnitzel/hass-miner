@@ -1,43 +1,55 @@
 {
-  "title": "HASS-miner",
   "config": {
     "step": {
       "user": {
-        "data": {
-          "ip": "[%key:common::config_flow::data::ip%]",
-          "min_power": "[%key:common::config_flow::data::min_power%]",
-          "max_power": "[%key:common::config_flow::data::max_power%]"
+        "menu_options": {
+          "manual": "Enter IP address manually",
+          "scan": "Scan network for miners"
         }
       },
-      "login": {
+      "manual": {
+        "title": "Add ASIC Miner",
+        "description": "Enter the IP address of your ASIC miner.",
         "data": {
-          "ssh_username": "[%key:common::config_flow::data::ssh_username%]",
-          "ssh_password": "[%key:common::config_flow::data::ssh_password%]",
-          "rpc_password": "[%key:common::config_flow::data::rpc_password%]",
-          "web_username": "[%key:common::config_flow::data::web_username%]",
-          "web_password": "[%key:common::config_flow::data::web_password%]"
+          "host": "IP Address",
+          "username": "Username (optional)",
+          "password": "Password (optional)"
         }
       },
-      "title": {
+      "scan": {
+        "title": "Scan Network",
+        "description": "Enter the subnet to scan. This has been pre-filled from your network settings.",
         "data": {
-          "title": "[%key:common::config_flow::data::title%]"
+          "subnet": "Subnet (e.g. 192.168.1.0/24)"
+        }
+      },
+      "scanning": {
+        "title": "Scanning…",
+        "description": "Scanning {subnet} for ASIC miners. This may take up to 30 seconds."
+      },
+      "pick_miner": {
+        "title": "Select Miner",
+        "description": "Choose a miner from the list of devices found on your network.",
+        "data": {
+          "selected_miner": "Miner"
+        }
+      },
+      "credentials": {
+        "title": "Credentials",
+        "description": "Enter login credentials for {host}, or leave blank if authentication is not required.",
+        "data": {
+          "username": "Username (optional)",
+          "password": "Password (optional)"
         }
       }
     },
-    "abort": {
-      "single_instance_allowed": "[%key:common::config_flow::abort::single_instance_allowed%]",
-      "no_devices_found": "[%key:common::config_flow::abort::no_devices_found%]",
-      "already_configured": "[%key:common::config_flow::abort::already_configured%]"
-    }
-  },
-  "services": {
-    "reboot": {
-      "name": "Reboot miner",
-      "description": "Reboots a miner."
+    "error": {
+      "cannot_connect": "Failed to connect. Check the IP address and that the miner is online.",
+      "no_miners_found": "No miners were found on that subnet. Try a different range.",
+      "unknown": "Unexpected error. Check the Home Assistant logs."
     },
-    "restart_backend": {
-      "name": "Restart mining on miner",
-      "description": "Restarts the mining process on a miner."
+    "abort": {
+      "already_configured": "This miner is already configured."
     }
   }
 }

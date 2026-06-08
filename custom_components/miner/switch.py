@@ -1,132 +1,91 @@
-"""Support for Miner shutdown."""
+"""Switch platform for ASIC Miner integration."""
+
 from __future__ import annotations
 
-import logging
+from datetime import timedelta
 
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import callback
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
 from .coordinator import MinerCoordinator
+from .entity import MinerEntity
 
-_LOGGER = logging.getLogger(__name__)
+
+class FaultLightSwitch(MinerEntity, SwitchEntity):
+    """Controls the miner's fault/locate LED."""
+
+    _attr_name = "Fault Light"
+    _attr_icon = "mdi:led-on"
+
+    def __init__(self, coordinator: MinerCoordinator) -> None:
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{self._device_unique_id}_fault_light"
+
+    @property
+    def is_on(self) -> bool | None:
+        if self.coordinator.data is None:
+            return None
+        return self.coordinator.data.light_flashing
+
+    @property
+    def available(self) -> bool:
+        return (
+            self.coordinator.last_update_success
+            and self.coordinator.data is not None
+            and self.coordinator.data.light_flashing is not None
+        )
+
+    async def async_turn_on(self, **kwargs) -> None:
+        await self.coordinator.miner.set_fault_light(True)
+        await self.coordinator.async_request_refresh()
+
+    async def async_turn_off(self, **kwargs) -> None:
+        await self.coordinator.miner.set_fault_light(False)
+        await self.coordinator.async_request_refresh()
+
+
+class MiningSwitch(MinerEntity, SwitchEntity):
+    """Pause or resume mining on the miner."""
+
+    _attr_name = "Mining"
+    _attr_icon = "mdi:pickaxe"
+
+    def __init__(self, coordinator: MinerCoordinator) -> None:
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{self._device_unique_id}_mining"
+
+    @property
+    def is_on(self) -> bool | None:
+        if self.coordinator.data is None:
+            return None
+        return self.coordinator.data.is_mining
+
+    async def async_turn_on(self, **kwargs) -> None:
+        await self.coordinator.miner.resume(timedelta(0))
+        await self.coordinator.async_request_refresh()
+
+    async def async_turn_off(self, **kwargs) -> None:
+        await self.coordinator.miner.pause(timedelta(0))
+        await self.coordinator.async_request_refresh()
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
+    entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Add sensors for passed config_entry in HA."""
-    coordinator: MinerCoordinator = hass.data[DOMAIN][config_entry.entry_id]
-    created = set()
+    coordinator: MinerCoordinator = hass.data[DOMAIN][entry.entry_id]
+    miner = coordinator.miner
 
-    @callback
-    def _create_entity(key: str):
-        """Create a sensor entity."""
-        created.add(key)
+    entities: list[MinerEntity] = []
 
-    await coordinator.async_config_entry_first_refresh()
-    if coordinator.miner.supports_shutdown:
-        async_add_entities(
-            [
-                MinerActiveSwitch(
-                    coordinator=coordinator,
-                )
-            ]
-        )
+    if miner.supports_set_fault_light:
+        entities.append(FaultLightSwitch(coordinator))
 
+    if miner.supports_pause and miner.supports_resume:
+        entities.append(MiningSwitch(coordinator))
 
-class MinerActiveSwitch(CoordinatorEntity[MinerCoordinator], SwitchEntity):
-    """Defines a Miner Switch to pause and unpause the miner."""
-
-    def __init__(
-        self,
-        coordinator: MinerCoordinator,
-    ) -> None:
-        """Initialize the sensor."""
-        super().__init__(coordinator=coordinator)
-        self._attr_unique_id = f"{self.coordinator.data['mac']}-active"
-        self._attr_is_on = self.coordinator.data["is_mining"]
-        self.updating_switch = False
-        self._last_mining_mode = None
-
-    @property
-    def name(self) -> str | None:
-        """Return name of the entity."""
-        return f"{self.coordinator.config_entry.title} active"
-
-    @property
-    def device_info(self) -> entity.DeviceInfo:
-        """Return device info."""
-        return entity.DeviceInfo(
-            identifiers={(DOMAIN, self.coordinator.data["mac"])},
-            manufacturer=self.coordinator.data["make"],
-            model=self.coordinator.data["model"],
-            sw_version=self.coordinator.data["fw_ver"],
-            name=f"{self.coordinator.config_entry.title}",
-        )
-
-    async def async_turn_on(self) -> None:
-        """Turn on miner."""
-        miner = self.coordinator.miner
-        _LOGGER.debug(f"{self.coordinator.config_entry.title}: Resume mining.")
-        if not miner.supports_shutdown:
-            raise TypeError(f"{miner}: Shutdown not supported.")
-        self._attr_is_on = True
-        try:
-            await miner.resume_mining()
-        except Exception as err:
-            # VNish and some firmwares return empty response but still work
-            _LOGGER.warning(f"{self.coordinator.config_entry.title}: Resume API returned error (may still work): {err}")
-        if miner.supports_power_modes and self._last_mining_mode:
-            try:
-                config = await miner.get_config()
-                config.mining_mode = self._last_mining_mode
-                await miner.send_config(config)
-            except Exception as err:
-                _LOGGER.warning(f"{self.coordinator.config_entry.title}: Could not restore config: {err}")
-        self.updating_switch = True
-        self.async_write_ha_state()
-
-    async def async_turn_off(self) -> None:
-        """Turn off miner."""
-        miner = self.coordinator.miner
-        _LOGGER.debug(f"{self.coordinator.config_entry.title}: Stop mining.")
-        if not miner.supports_shutdown:
-            raise TypeError(f"{miner}: Shutdown not supported.")
-        if miner.supports_power_modes:
-            try:
-                self._last_mining_mode = self.coordinator.data.get("config", {}).mining_mode if self.coordinator.data.get("config") else None
-            except Exception:
-                self._last_mining_mode = None
-        self._attr_is_on = False
-        try:
-            await miner.stop_mining()
-        except Exception as err:
-            # VNish and some firmwares return empty response but still work
-            _LOGGER.warning(f"{self.coordinator.config_entry.title}: Stop API returned error (may still work): {err}")
-        self.updating_switch = True
-        self.async_write_ha_state()
-
-    @callback
-    def _handle_coordinator_update(self) -> None:
-        is_mining = self.coordinator.data["is_mining"]
-        if is_mining is not None:
-            if self.updating_switch:
-                if is_mining == self._attr_is_on:
-                    self.updating_switch = False
-            if not self.updating_switch:
-                self._attr_is_on = is_mining
-
-        super()._handle_coordinator_update()
-
-    @property
-    def available(self) -> bool:
-        """Return if entity is available or not."""
-        return self.coordinator.available
+    async_add_entities(entities)

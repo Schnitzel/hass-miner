@@ -1,23 +1,5 @@
-"""Constants for the Miner integration."""
+"""Constants for the ASIC Miner integration."""
 
-DOMAIN = "miner"
+DOMAIN = "MINER"
 
-CONF_IP = "ip"
-CONF_TITLE = "title"
-CONF_SSH_PASSWORD = "ssh_password"
-CONF_SSH_USERNAME = "ssh_username"
-CONF_RPC_PASSWORD = "rpc_password"
-CONF_WEB_PASSWORD = "web_password"
-CONF_WEB_USERNAME = "web_username"
-CONF_MIN_POWER = "min_power"
-CONF_MAX_POWER = "max_power"
-
-SERVICE_REBOOT = "reboot"
-SERVICE_RESTART_BACKEND = "restart_backend"
-SERVICE_SET_WORK_MODE = "set_work_mode"
-
-TERA_HASH_PER_SECOND = "TH/s"
-JOULES_PER_TERA_HASH = "J/TH"
-
-
-PYASIC_VERSION = "0.78.8"
+DEFAULT_SCAN_INTERVAL = 30  # seconds

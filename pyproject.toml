@@ -1,21 +1,15 @@
-[tool.poetry]
+[project]
 name = "hass-miner"
-version = "1.1.19"
-description = ""
-authors = ["Michael Schmid <michael@amazee.com>"]
+version = "1.2.7-rc2"
+description = "A home assistant integration for asic miners, using asic-rs"
+authors = [
+    {name = "Michael Schmid", email = "michael@amazee.com"}
+]
 readme = "README.md"
+requires-python = ">=3.14.2,<4.0"
 package-mode = false
-
-[tool.poetry.dependencies]
-python = ">=3.13.2.0,<3.14"
-homeassistant = "^2025.7.3"
-colorlog = "^6.9.0"
-ruff = "^0.12.5"
-pyasic = "^0.75.0"
-setuptools = "^80.9.0"
-pre-commit = "^4.2.0"
-
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+dependencies = [
+    "pyasic-rs>=0.5.3",
+    "homeassistant>=2026.1.0",
+    "ruff>=0.15.16",
+]
