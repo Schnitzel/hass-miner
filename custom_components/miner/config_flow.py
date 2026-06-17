@@ -59,7 +59,9 @@ async def _connect_and_title(ip: str, username: str = "", password: str = "") ->
     if username and password:
         miner.set_auth(username, password)
     data = await miner.get_data()
-    title = f"{data.device_info.make} {data.device_info.model} ({ip})"
+    # pyasic-rs 0.6.0: DeviceInfo exposes fields via model_dump(), not attrs.
+    di = data.device_info.model_dump()
+    title = f"{di.get('make')} {di.get('model')} ({ip})"
     return miner, title
 
 
