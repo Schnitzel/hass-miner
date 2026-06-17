@@ -14,8 +14,7 @@ PLATFORMS = [
     Platform.BINARY_SENSOR,
     Platform.SWITCH,
     Platform.BUTTON,
-    # NUMBER (throttle) deferred: number.py imports pyasic_rs.data.TuningTargetPower,
-    # renamed to TuningTarget in pyasic-rs 0.6.0. Re-enable once adapted.
+    Platform.NUMBER,
 ]
 
 
