@@ -51,5 +51,16 @@
     "abort": {
       "already_configured": "This miner is already configured."
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Miner Options",
+        "description": "Set the firmware web password (VNish: needed for preset/throttle control). Leave blank if not required.",
+        "data": {
+          "password": "Password"
+        }
+      }
+    }
   }
 }

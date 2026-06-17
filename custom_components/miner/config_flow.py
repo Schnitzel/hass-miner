@@ -8,7 +8,9 @@ import ipaddress
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.components.network import async_get_adapters
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME
+from homeassistant.core import callback
 from homeassistant.data_entry_flow import FlowResult
 
 from pyasic_rs import MinerFactory
@@ -69,6 +71,11 @@ class AsicMinerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for ASIC Miner."""
 
     VERSION = 1
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry: ConfigEntry) -> "AsicMinerOptionsFlow":
+        return AsicMinerOptionsFlow()
 
     def __init__(self) -> None:
         self._subnet: str = ""
@@ -210,4 +217,29 @@ class AsicMinerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             data_schema=STEP_CREDENTIALS_SCHEMA,
             description_placeholders={"host": self._selected_ip},
             errors=errors,
+        )
+
+
+class AsicMinerOptionsFlow(config_entries.OptionsFlow):
+    """Options flow — set/update the firmware web password post-setup.
+
+    BETA: needed so the VNish preset/throttle controls can obtain an unlock
+    token without re-adding the miner (which would recreate all entities).
+
+    Note: HA provides ``self.config_entry`` automatically; do not assign it
+    (it is a read-only property in current HA).
+    """
+
+    async def async_step_init(self, user_input=None) -> FlowResult:
+        if user_input is not None:
+            return self.async_create_entry(title="", data=user_input)
+
+        current = self.config_entry.options.get(
+            CONF_PASSWORD, self.config_entry.data.get(CONF_PASSWORD, "")
+        )
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema(
+                {vol.Optional(CONF_PASSWORD, default=current): str}
+            ),
         )
