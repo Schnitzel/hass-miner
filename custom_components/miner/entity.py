@@ -18,15 +18,12 @@ class MinerEntity(CoordinatorEntity[MinerCoordinator]):
     def __init__(self, coordinator: MinerCoordinator) -> None:
         super().__init__(coordinator)
         data = coordinator.data
-        # pyasic-rs 0.6.0: DeviceInfo no longer exposes .make/.model as
-        # attributes (only model_dump()).
-        di = data.device_info.model_dump()
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, self._device_unique_id)},
             connections={(dr.CONNECTION_NETWORK_MAC, data.mac)} if data.mac else set(),
-            name=f"{di.get('make')} {di.get('model')}",
-            manufacturer=di.get("make"),
-            model=di.get("model"),
+            name=f"{data.device_info.make} {data.device_info.model}",
+            manufacturer=data.device_info.make,
+            model=data.device_info.model,
             sw_version=data.firmware_version,
             configuration_url=f"http://{coordinator.ip}",
         )

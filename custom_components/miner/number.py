@@ -33,12 +33,10 @@ class PowerLimitNumber(MinerEntity, NumberEntity):
         data = self.coordinator.data
         if data is None:
             return None
-        # pyasic-rs 0.6.0: tuning_target is a TuningTarget whose .watts is set
-        # for the Power variant; fall back to current draw if no target is set.
-        tt = getattr(data, "tuning_target", None)
-        watts = getattr(tt, "watts", None) if tt is not None else None
-        if watts is not None:
-            return watts
+        if data.tuning_target is not None:
+            watts = data.tuning_target.watts
+            if watts is not None:
+                return watts
         return data.wattage
 
     async def async_set_native_value(self, value: float) -> None:
