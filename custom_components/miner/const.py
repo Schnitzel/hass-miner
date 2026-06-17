@@ -1,5 +1,5 @@
 """Constants for the ASIC Miner integration."""
 
-DOMAIN = "MINER"
+DOMAIN = "miner"
 
 DEFAULT_SCAN_INTERVAL = 30  # seconds
