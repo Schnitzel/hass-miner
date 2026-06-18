@@ -179,8 +179,8 @@ def _primary_pool_url(data: MinerData) -> str | None:
 # ── Per-board sensor factories ──────────────────────────────────────────────
 
 
-def _board_sensors(board: BoardData) -> list[MinerSensorEntityDescription]:
-    n = board.position
+def _board_sensors(position: int) -> list[MinerSensorEntityDescription]:
+    n = position
     return [
         MinerSensorEntityDescription(
             key=f"board_{n}_hashrate",
@@ -348,20 +348,22 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     coordinator: MinerCoordinator = hass.data[DOMAIN][entry.entry_id]
-    data = coordinator.data
 
     descriptions: list[MinerSensorEntityDescription] = list(MINER_SENSORS)
 
-    # Add per-board sensors for each detected hashboard
-    for board in data.hashboards:
-        descriptions.extend(_board_sensors(board))
+    # Enumerate per-board / per-fan entities from the coordinator helpers (live
+    # data first, then the cached profile). This way entities are still created
+    # from the cached profile when ``data`` is None (miner offline at startup);
+    # value_fns look the board/fan up by position at value time as before.
+    for position in coordinator.board_positions:
+        descriptions.extend(_board_sensors(position))
 
     # Add fan sensors
-    for fan in data.fans:
-        descriptions.append(_fan_sensor(fan.position, psu=False))
+    for position in coordinator.fan_positions:
+        descriptions.append(_fan_sensor(position, psu=False))
 
     # Add PSU fan sensors
-    for fan in data.psu_fans:
-        descriptions.append(_fan_sensor(fan.position, psu=True))
+    for position in coordinator.psu_fan_positions:
+        descriptions.append(_fan_sensor(position, psu=True))
 
     async_add_entities(MinerSensorEntity(coordinator, desc) for desc in descriptions)
