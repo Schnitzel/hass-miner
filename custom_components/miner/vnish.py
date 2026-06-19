@@ -245,14 +245,22 @@ async def apply_preset(
             body = {}
             with contextlib.suppress(Exception):
                 body = await r.json()
-        if ok and body.get("restart_required"):
-            async with session.post(
-                f"{_base(ip)}/mining/restart", headers=h, timeout=_TIMEOUT
-            ):
-                pass
+        # NOTE (#620, live-verified 2026-06-19 on an S19 Pro Hydro / VNish):
+        # a preset change is applied LIVE by VNish -- frequency, power and
+        # hashrate adopt the new preset within ~30s with no reboot (miner_state
+        # stays "mining", miner_state_time keeps climbing, no re-init). The
+        # ``restart_required`` field in the POST response is the *standing*
+        # device flag, not a per-change verdict: a preceding throttle change
+        # (which itself needs no restart either) sets it sticky-true, so reading
+        # it here triggered unnecessary /mining/restart cycles. We no longer
+        # restart after a preset change.
     except Exception as err:  # noqa: BLE001
         return (False, f"apply failed: {err}")
-    return (ok, f"HTTP {'200' if ok else 'error'} restart={body.get('restart_required')}")
+    return (
+        ok,
+        f"HTTP {'200' if ok else 'error'} "
+        f"restart_required={body.get('restart_required')} (applied live, no restart)",
+    )
 
 
 async def set_throttle(
