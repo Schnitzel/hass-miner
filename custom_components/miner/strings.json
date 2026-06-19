@@ -51,5 +51,39 @@
     "abort": {
       "already_configured": "This miner is already configured."
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Miner Options",
+        "description": "Tick which sensor categories to create. Unticking a category removes its entities on the next reload. Changing any option reloads the integration.",
+        "data": {
+          "sensor_categories": "Sensor categories",
+          "only_available": "Only create type-relevant sensors",
+          "scan_interval": "Update interval (seconds)",
+          "power_entity": "Power switch entity (optional)",
+          "boot_timeout": "Boot timeout (seconds)",
+          "password": "Firmware web password (BETA, for VNish)"
+        },
+        "data_description": {
+          "sensor_categories": "Tick the groups to create. Unticked groups are removed on reload.",
+          "only_available": "Skip sensors that don't apply to this miner (e.g. fluid/water temperatures on air-cooled miners, chip temperature where the firmware doesn't report it).",
+          "scan_interval": "How often to poll the miner. Lower = fresher data but more load on the miner (default 30 s).",
+          "power_entity": "If set, polling pauses while this switch/sensor is off, then runs a fast boot loop after power-on. Leave empty to always poll.",
+          "boot_timeout": "How long to wait for the miner to come up after power-on before raising the boot-timeout alarm (default 120 s)."
+        }
+      }
+    }
+  },
+  "selector": {
+    "sensor_categories": {
+      "options": {
+        "miner_summary": "Miner summary (hashrate, power, J/TH, temps, uptime, pools)",
+        "safety": "Safety / diagnose (alarm + reason)",
+        "board_temps": "Per-board temperatures (PCB board + inlet/outlet chip temps)",
+        "board_perf": "Per-board performance (hashrate / voltage / frequency / chips)",
+        "fans": "Fans (RPM)"
+      }
+    }
   }
 }

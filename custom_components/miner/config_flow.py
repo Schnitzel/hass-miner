@@ -8,12 +8,42 @@ import ipaddress
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.components.network import async_get_adapters
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME
+from homeassistant.core import callback
 from homeassistant.data_entry_flow import FlowResult
+from homeassistant.helpers.selector import (
+    BooleanSelector,
+    EntitySelector,
+    EntitySelectorConfig,
+    NumberSelector,
+    NumberSelectorConfig,
+    NumberSelectorMode,
+    SelectOptionDict,
+    SelectSelector,
+    SelectSelectorConfig,
+    SelectSelectorMode,
+)
 
 from pyasic_rs import MinerFactory
 
-from .const import DOMAIN
+from .const import (
+    CONF_BOOT_TIMEOUT,
+    CONF_ONLY_AVAILABLE,
+    CONF_POWER_ENTITY,
+    CONF_SCAN_INTERVAL,
+    CONF_SENSOR_CATEGORIES,
+    DEFAULT_BOOT_TIMEOUT,
+    DEFAULT_ONLY_AVAILABLE,
+    DEFAULT_SCAN_INTERVAL,
+    DEFAULT_SENSOR_CATEGORIES,
+    DOMAIN,
+    MAX_BOOT_TIMEOUT,
+    MAX_SCAN_INTERVAL,
+    MIN_BOOT_TIMEOUT,
+    MIN_SCAN_INTERVAL,
+    SENSOR_CATEGORIES,
+)
 
 CONF_SUBNET = "subnet"
 CONF_SELECTED_MINER = "selected_miner"
@@ -66,6 +96,11 @@ class AsicMinerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for ASIC Miner."""
 
     VERSION = 1
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry: ConfigEntry) -> AsicMinerOptionsFlow:
+        return AsicMinerOptionsFlow()
 
     def __init__(self) -> None:
         self._subnet: str = ""
@@ -207,4 +242,108 @@ class AsicMinerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             data_schema=STEP_CREDENTIALS_SCHEMA,
             description_placeholders={"host": self._selected_ip},
             errors=errors,
+        )
+
+
+class AsicMinerOptionsFlow(config_entries.OptionsFlow):
+    """Options flow — sensor categories, only-available, poll interval, web password.
+
+    * **Sensor categories**: tick the groups of sensors to create. Unticking a
+      category removes its entities on reload (deterministic / boot-safe).
+    * **Only type-relevant sensors**: hide values that don't apply to this miner
+      (e.g. fluid/water temps on air-cooled, chip temp where unreported).
+    * **Scan interval**: how often the miner is polled.
+    * **Firmware web password** (BETA): lets the VNish preset/throttle controls
+      obtain an unlock token without re-adding the miner.
+
+    Note: HA provides ``self.config_entry`` automatically; do not assign it
+    (it is a read-only property in current HA).
+    """
+
+    async def async_step_init(self, user_input=None) -> FlowResult:
+        if user_input is not None:
+            # Merge over existing options so unrelated keys are preserved.
+            data = {**self.config_entry.options, **user_input}
+            # An empty/unselected power entity must DISABLE power-aware polling,
+            # not silently keep a previously-set value (the merge would otherwise
+            # preserve it). Treat empty/absent as "cleared".
+            if not user_input.get(CONF_POWER_ENTITY):
+                data.pop(CONF_POWER_ENTITY, None)
+            return self.async_create_entry(title="", data=data)
+
+        options = self.config_entry.options
+        current_password = options.get(
+            CONF_PASSWORD, self.config_entry.data.get(CONF_PASSWORD, "")
+        )
+        current_categories = options.get(
+            CONF_SENSOR_CATEGORIES, DEFAULT_SENSOR_CATEGORIES
+        )
+        current_only_available = options.get(
+            CONF_ONLY_AVAILABLE, DEFAULT_ONLY_AVAILABLE
+        )
+        current_scan_interval = options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
+        current_power_entity = options.get(CONF_POWER_ENTITY, "")
+        current_boot_timeout = options.get(CONF_BOOT_TIMEOUT, DEFAULT_BOOT_TIMEOUT)
+
+        categories_select = SelectSelector(
+            SelectSelectorConfig(
+                options=[
+                    SelectOptionDict(value=cat, label=cat)
+                    for cat in SENSOR_CATEGORIES
+                ],
+                translation_key=CONF_SENSOR_CATEGORIES,
+                multiple=True,
+                mode=SelectSelectorMode.LIST,
+            )
+        )
+        scan_interval_select = NumberSelector(
+            NumberSelectorConfig(
+                min=MIN_SCAN_INTERVAL,
+                max=MAX_SCAN_INTERVAL,
+                step=1,
+                unit_of_measurement="s",
+                mode=NumberSelectorMode.BOX,
+            )
+        )
+        power_entity_select = EntitySelector(
+            EntitySelectorConfig(
+                domain=["switch", "binary_sensor", "input_boolean"]
+            )
+        )
+        boot_timeout_select = NumberSelector(
+            NumberSelectorConfig(
+                min=MIN_BOOT_TIMEOUT,
+                max=MAX_BOOT_TIMEOUT,
+                step=5,
+                unit_of_measurement="s",
+                mode=NumberSelectorMode.BOX,
+            )
+        )
+
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema(
+                {
+                    vol.Optional(
+                        CONF_SENSOR_CATEGORIES, default=current_categories
+                    ): categories_select,
+                    vol.Optional(
+                        CONF_ONLY_AVAILABLE, default=current_only_available
+                    ): BooleanSelector(),
+                    vol.Optional(
+                        CONF_SCAN_INTERVAL, default=current_scan_interval
+                    ): scan_interval_select,
+                    # EntitySelector: no hard default — pass the current value via
+                    # suggested_value so submitting without a selection simply
+                    # omits the key (key absent ⇒ power-aware polling disabled).
+                    vol.Optional(
+                        CONF_POWER_ENTITY,
+                        description={"suggested_value": current_power_entity or None},
+                    ): power_entity_select,
+                    vol.Optional(
+                        CONF_BOOT_TIMEOUT, default=current_boot_timeout
+                    ): boot_timeout_select,
+                    vol.Optional(CONF_PASSWORD, default=current_password): str,
+                }
+            ),
         )

@@ -35,7 +35,10 @@ async def async_setup_entry(
 
     entities: list[MinerEntity] = []
 
-    if coordinator.miner.supports_restart:
+    # Gated on a miner capability flag. When the miner is None (offline at
+    # startup) we cannot know it, so we skip the native entity; it appears after
+    # the first successful connection + a reload.
+    if coordinator.miner is not None and coordinator.miner.supports_restart:
         entities.append(RestartButton(coordinator))
 
     async_add_entities(entities)

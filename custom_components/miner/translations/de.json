@@ -1,0 +1,89 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "menu_options": {
+          "manual": "IP-Adresse manuell eingeben",
+          "scan": "Netzwerk nach Minern durchsuchen"
+        }
+      },
+      "manual": {
+        "title": "ASIC-Miner hinzufügen",
+        "description": "Gib die IP-Adresse deines ASIC-Miners ein.",
+        "data": {
+          "host": "IP-Adresse",
+          "username": "Benutzername (optional)",
+          "password": "Passwort (optional)"
+        }
+      },
+      "scan": {
+        "title": "Netzwerk durchsuchen",
+        "description": "Gib das zu durchsuchende Subnetz ein. Es wurde aus deinen Netzwerkeinstellungen vorausgefüllt.",
+        "data": {
+          "subnet": "Subnetz (z. B. 192.168.1.0/24)"
+        }
+      },
+      "scanning": {
+        "title": "Suche läuft …",
+        "description": "{subnet} wird nach ASIC-Minern durchsucht. Das kann bis zu 30 Sekunden dauern."
+      },
+      "pick_miner": {
+        "title": "Miner auswählen",
+        "description": "Wähle einen Miner aus der Liste der im Netzwerk gefundenen Geräte.",
+        "data": {
+          "selected_miner": "Miner"
+        }
+      },
+      "credentials": {
+        "title": "Zugangsdaten",
+        "description": "Gib die Anmeldedaten für {host} ein oder lass die Felder leer, falls keine Authentifizierung nötig ist.",
+        "data": {
+          "username": "Benutzername (optional)",
+          "password": "Passwort (optional)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Verbindung fehlgeschlagen. Prüfe die IP-Adresse und ob der Miner online ist.",
+      "no_miners_found": "In diesem Subnetz wurden keine Miner gefunden. Versuche einen anderen Bereich.",
+      "unknown": "Unerwarteter Fehler. Prüfe die Home-Assistant-Logs."
+    },
+    "abort": {
+      "already_configured": "Dieser Miner ist bereits konfiguriert."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Miner-Optionen",
+        "description": "Wähle aus, welche Sensor-Kategorien angelegt werden. Eine abgewählte Kategorie wird beim nächsten Neuladen entfernt. Jede Änderung lädt die Integration neu.",
+        "data": {
+          "sensor_categories": "Sensor-Kategorien",
+          "only_available": "Nur typ-relevante Sensoren anlegen",
+          "scan_interval": "Abfrageintervall (Sekunden)",
+          "power_entity": "Strom-Schalter-Entität (optional)",
+          "boot_timeout": "Boot-Timeout (Sekunden)",
+          "password": "Firmware-Web-Passwort (BETA, für VNish)"
+        },
+        "data_description": {
+          "sensor_categories": "Gewünschte Gruppen ankreuzen. Abgewählte Gruppen werden beim Neuladen entfernt.",
+          "only_available": "Sensoren überspringen, die für diesen Miner nicht zutreffen (z. B. Fluid-/Wasser-Temperaturen bei luftgekühlten Minern, Chip-Temperatur wenn die Firmware sie nicht meldet).",
+          "scan_interval": "Wie oft der Miner abgefragt wird. Niedriger = frischere Daten, aber mehr Last auf dem Miner (Default 30 s).",
+          "power_entity": "Wenn gesetzt, pausiert das Polling solange dieser Schalter/Sensor aus ist und läuft nach dem Einschalten in einer schnellen Boot-Schleife. Leer lassen für dauerhaftes Polling.",
+          "boot_timeout": "Wie lange nach dem Einschalten auf den Miner gewartet wird, bevor der Boot-Timeout-Alarm ausgelöst wird (Default 120 s)."
+        }
+      }
+    }
+  },
+  "selector": {
+    "sensor_categories": {
+      "options": {
+        "miner_summary": "Miner-Summary (Hashrate, Leistung, J/TH, Temperaturen, Uptime, Pools)",
+        "safety": "Safety / Diagnose (Alarm + Begründung)",
+        "board_temps": "Pro-Board-Temperaturen (PCB-Board + Inlet-/Outlet-Chip-Temperaturen)",
+        "board_perf": "Pro-Board-Leistung (Hashrate / Spannung / Frequenz / Chips)",
+        "fans": "Lüfter (RPM)"
+      }
+    }
+  }
+}

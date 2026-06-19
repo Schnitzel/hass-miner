@@ -16,9 +16,16 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from pyasic_rs.data import MinerData
 
-from .const import DOMAIN
+from .const import (
+    CAT_MINER_SUMMARY,
+    CAT_SAFETY,
+    CONF_SENSOR_CATEGORIES,
+    DEFAULT_SENSOR_CATEGORIES,
+    DOMAIN,
+)
 from .coordinator import MinerCoordinator
-from .entity import MinerEntity
+from .entity import MinerEntity, async_remove_stale_entities
+from .sensor import _has_problem
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -27,6 +34,7 @@ class MinerBinarySensorDescription(BinarySensorEntityDescription):
     available_fn: Callable[[MinerData], bool] = lambda _: True
 
 
+# Miner-wide status flags (CAT_MINER_SUMMARY).
 BINARY_SENSORS: tuple[MinerBinarySensorDescription, ...] = (
     MinerBinarySensorDescription(
         key="is_mining",
@@ -41,6 +49,43 @@ BINARY_SENSORS: tuple[MinerBinarySensorDescription, ...] = (
         available_fn=lambda d: d.light_flashing is not None,
     ),
 )
+
+# Safety (CAT_SAFETY): on when the miner reports its own Error/Warning state.
+# Defensive (B2): with no messages on stock 0.6.2, _has_problem -> False.
+SAFETY_BINARY_SENSORS: tuple[MinerBinarySensorDescription, ...] = (
+    MinerBinarySensorDescription(
+        key="safety_problem",
+        name="Safety Problem",
+        device_class=BinarySensorDeviceClass.PROBLEM,
+        value_fn=_has_problem,
+    ),
+)
+
+
+class MinerBootTimeoutBinarySensor(MinerEntity, BinarySensorEntity):
+    """Coordinator-backed boot-timeout alarm (not MinerData-backed).
+
+    Only created when a power_entity is configured AND CAT_SAFETY is enabled.
+    Latches ON when the miner fails to come up within boot_timeout after a
+    power-on transition.
+    """
+
+    _attr_name = "Boot Timeout"
+    _attr_device_class = BinarySensorDeviceClass.PROBLEM
+    _attr_icon = "mdi:timer-alert"
+
+    def __init__(self, coordinator: MinerCoordinator) -> None:
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{self._device_unique_id}_boot_timeout"
+
+    @property
+    def is_on(self) -> bool:
+        return self.coordinator.boot_failed
+
+    @property
+    def available(self) -> bool:
+        # The alarm itself is always meaningful while the entity exists.
+        return True
 
 
 class MinerBinarySensorEntity(MinerEntity, BinarySensorEntity):
@@ -74,6 +119,32 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     coordinator: MinerCoordinator = hass.data[DOMAIN][entry.entry_id]
-    async_add_entities(
-        MinerBinarySensorEntity(coordinator, desc) for desc in BINARY_SENSORS
+
+    categories = set(
+        entry.options.get(CONF_SENSOR_CATEGORIES, DEFAULT_SENSOR_CATEGORIES)
     )
+
+    descriptions: list[MinerBinarySensorDescription] = []
+    if CAT_MINER_SUMMARY in categories:
+        descriptions.extend(BINARY_SENSORS)
+    if CAT_SAFETY in categories:
+        descriptions.extend(SAFETY_BINARY_SENSORS)
+
+    # Boot-timeout alarm: coordinator-backed, only when power-aware polling is
+    # configured and the safety category is enabled.
+    add_boot_timeout = CAT_SAFETY in categories and coordinator.power_entity
+
+    mac = coordinator.device_mac
+    device_uid = mac.replace(":", "").lower() if mac else coordinator.ip
+    keep = {f"{device_uid}_{d.key}" for d in descriptions}
+    if add_boot_timeout:
+        keep.add(f"{device_uid}_boot_timeout")
+    async_remove_stale_entities(hass, entry, "binary_sensor", keep)
+
+    entities: list[BinarySensorEntity] = [
+        MinerBinarySensorEntity(coordinator, desc) for desc in descriptions
+    ]
+    if add_boot_timeout:
+        entities.append(MinerBootTimeoutBinarySensor(coordinator))
+
+    async_add_entities(entities)

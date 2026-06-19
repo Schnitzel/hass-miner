@@ -82,10 +82,13 @@ async def async_setup_entry(
 
     entities: list[MinerEntity] = []
 
-    if miner.supports_set_fault_light:
+    # These are gated on miner capability flags. When the miner is None (offline
+    # at startup) we cannot know them, so we skip these native entities; they
+    # appear after the first successful connection + a reload.
+    if miner is not None and miner.supports_set_fault_light:
         entities.append(FaultLightSwitch(coordinator))
 
-    if miner.supports_pause and miner.supports_resume:
+    if miner is not None and miner.supports_pause and miner.supports_resume:
         entities.append(MiningSwitch(coordinator))
 
     async_add_entities(entities)
