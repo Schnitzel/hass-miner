@@ -2,7 +2,7 @@
 
 target-version = "py310"
 
-select = [
+lint.select = [
     "B007",    # Loop control variable {name} not used within loop body
     "B014",    # Exception handler with duplicate exception
     "C",       # complexity
@@ -26,7 +26,7 @@ select = [
     "W",       # pycodestyle
 ]
 
-ignore = [
+lint.ignore = [
     "D101", # Require docstrings in public classes
     "D102", # Require docstrings in public methods
     "D103", # Require docstrings in public function
