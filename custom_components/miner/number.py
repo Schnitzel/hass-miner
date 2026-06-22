@@ -53,7 +53,11 @@ async def async_setup_entry(
 
     entities: list[MinerEntity] = []
 
-    if coordinator.miner.supports_set_power_limit:
+    # coordinator.miner is None when the miner was unreachable at startup (the
+    # entry still loads for offline resilience). Capability-gated entities can't
+    # be probed without a connection, so they're skipped here and appear after
+    # the first successful connection + a reload.
+    if coordinator.miner is not None and coordinator.miner.supports_set_power_limit:
         entities.append(PowerLimitNumber(coordinator))
 
     async_add_entities(entities)

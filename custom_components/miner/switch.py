@@ -82,10 +82,14 @@ async def async_setup_entry(
 
     entities: list[MinerEntity] = []
 
-    if miner.supports_set_fault_light:
+    # miner is None when it was unreachable at startup (the entry still loads for
+    # offline resilience). Capability-gated entities can't be probed without a
+    # connection, so they're skipped and appear after the first successful
+    # connection + a reload.
+    if miner is not None and miner.supports_set_fault_light:
         entities.append(FaultLightSwitch(coordinator))
 
-    if miner.supports_pause and miner.supports_resume:
+    if miner is not None and miner.supports_pause and miner.supports_resume:
         entities.append(MiningSwitch(coordinator))
 
     async_add_entities(entities)

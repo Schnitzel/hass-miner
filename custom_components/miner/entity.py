@@ -17,21 +17,32 @@ class MinerEntity(CoordinatorEntity[MinerCoordinator]):
 
     def __init__(self, coordinator: MinerCoordinator) -> None:
         super().__init__(coordinator)
-        data = coordinator.data
+        # Build device info from the coordinator helpers (live data first, then
+        # cached profile, then None) so the device exists even when the miner is
+        # unreachable at startup. Tolerate all-None: never raise here.
+        mac = coordinator.device_mac
+        make = coordinator.device_make
+        model = coordinator.device_model
+        if make or model:
+            name = " ".join(p for p in (make, model) if p)
+        else:
+            name = f"ASIC Miner ({coordinator.ip})"
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, self._device_unique_id)},
-            connections={(dr.CONNECTION_NETWORK_MAC, data.mac)} if data.mac else set(),
-            name=f"{data.device_info.make} {data.device_info.model}",
-            manufacturer=data.device_info.make,
-            model=data.device_info.model,
-            sw_version=data.firmware_version,
+            connections=(
+                {(dr.CONNECTION_NETWORK_MAC, mac)} if mac else set()
+            ),
+            name=name,
+            manufacturer=make,
+            model=model,
+            sw_version=coordinator.fw_version,
             configuration_url=f"http://{coordinator.ip}",
         )
 
     @property
     def _device_unique_id(self) -> str:
         """Stable device identifier: prefer MAC over IP."""
-        data = self.coordinator.data
-        if data and data.mac:
-            return data.mac.replace(":", "").lower()
+        mac = self.coordinator.device_mac
+        if mac:
+            return mac.replace(":", "").lower()
         return self.coordinator.ip
