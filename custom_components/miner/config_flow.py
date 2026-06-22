@@ -8,12 +8,25 @@ import ipaddress
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.components.network import async_get_adapters
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME
+from homeassistant.core import callback
 from homeassistant.data_entry_flow import FlowResult
+from homeassistant.helpers.selector import (
+    NumberSelector,
+    NumberSelectorConfig,
+    NumberSelectorMode,
+)
 
 from pyasic_rs import MinerFactory
 
-from .const import DOMAIN
+from .const import (
+    CONF_SCAN_INTERVAL,
+    DEFAULT_SCAN_INTERVAL,
+    DOMAIN,
+    MAX_SCAN_INTERVAL,
+    MIN_SCAN_INTERVAL,
+)
 
 CONF_SUBNET = "subnet"
 CONF_SELECTED_MINER = "selected_miner"
@@ -66,6 +79,11 @@ class AsicMinerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for ASIC Miner."""
 
     VERSION = 1
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry: ConfigEntry) -> "AsicMinerOptionsFlow":
+        return AsicMinerOptionsFlow()
 
     def __init__(self) -> None:
         self._subnet: str = ""
@@ -207,4 +225,39 @@ class AsicMinerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             data_schema=STEP_CREDENTIALS_SCHEMA,
             description_placeholders={"host": self._selected_ip},
             errors=errors,
+        )
+
+
+class AsicMinerOptionsFlow(config_entries.OptionsFlow):
+    """Options flow for ASIC Miner — configurable polling interval."""
+
+    async def async_step_init(self, user_input=None) -> FlowResult:
+        if user_input is not None:
+            return self.async_create_entry(
+                title="",
+                data={**self.config_entry.options, **user_input},
+            )
+
+        scan_interval_select = NumberSelector(
+            NumberSelectorConfig(
+                min=MIN_SCAN_INTERVAL,
+                max=MAX_SCAN_INTERVAL,
+                step=1,
+                unit_of_measurement="s",
+                mode=NumberSelectorMode.BOX,
+            )
+        )
+
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema(
+                {
+                    vol.Optional(
+                        CONF_SCAN_INTERVAL,
+                        default=self.config_entry.options.get(
+                            CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL
+                        ),
+                    ): scan_interval_select,
+                }
+            ),
         )

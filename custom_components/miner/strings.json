@@ -51,5 +51,18 @@
     "abort": {
       "already_configured": "This miner is already configured."
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Miner Options",
+        "data": {
+          "scan_interval": "Scan interval (seconds)"
+        },
+        "data_description": {
+          "scan_interval": "How often Home Assistant polls the miner for new data."
+        }
+      }
+    }
   }
 }
