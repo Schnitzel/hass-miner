@@ -82,7 +82,7 @@ class AsicMinerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     @staticmethod
     @callback
-    def async_get_options_flow(config_entry: ConfigEntry) -> "AsicMinerOptionsFlow":
+    def async_get_options_flow(config_entry: ConfigEntry) -> AsicMinerOptionsFlow:
         return AsicMinerOptionsFlow()
 
     def __init__(self) -> None:
