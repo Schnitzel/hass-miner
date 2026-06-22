@@ -46,6 +46,7 @@ MINER_SENSORS: tuple[MinerSensorEntityDescription, ...] = (
     MinerSensorEntityDescription(
         key="hashrate",
         name="Hashrate",
+        icon="mdi:pickaxe",
         native_unit_of_measurement=UNIT_TH_S,
         state_class=SensorStateClass.MEASUREMENT,
         suggested_display_precision=2,
@@ -59,6 +60,7 @@ MINER_SENSORS: tuple[MinerSensorEntityDescription, ...] = (
     MinerSensorEntityDescription(
         key="expected_hashrate",
         name="Expected Hashrate",
+        icon="mdi:pickaxe",
         native_unit_of_measurement=UNIT_TH_S,
         state_class=SensorStateClass.MEASUREMENT,
         suggested_display_precision=2,
@@ -102,6 +104,7 @@ MINER_SENSORS: tuple[MinerSensorEntityDescription, ...] = (
     MinerSensorEntityDescription(
         key="efficiency",
         name="Efficiency",
+        icon="mdi:gauge",
         native_unit_of_measurement=UNIT_J_TH,
         state_class=SensorStateClass.MEASUREMENT,
         suggested_display_precision=2,
@@ -121,6 +124,7 @@ MINER_SENSORS: tuple[MinerSensorEntityDescription, ...] = (
     MinerSensorEntityDescription(
         key="total_chips",
         name="Total Active Chips",
+        icon="mdi:chip",
         state_class=SensorStateClass.MEASUREMENT,
         value_fn=lambda d: d.total_chips,
         available_fn=lambda d: d.total_chips is not None,
@@ -128,6 +132,7 @@ MINER_SENSORS: tuple[MinerSensorEntityDescription, ...] = (
     MinerSensorEntityDescription(
         key="pool_accepted_shares",
         name="Pool Accepted Shares",
+        icon="mdi:check",
         state_class=SensorStateClass.TOTAL_INCREASING,
         value_fn=lambda d: _primary_pool_accepted(d),
         available_fn=lambda d: _primary_pool_accepted(d) is not None,
@@ -135,6 +140,7 @@ MINER_SENSORS: tuple[MinerSensorEntityDescription, ...] = (
     MinerSensorEntityDescription(
         key="pool_rejected_shares",
         name="Pool Rejected Shares",
+        icon="mdi:close",
         state_class=SensorStateClass.TOTAL_INCREASING,
         value_fn=lambda d: _primary_pool_rejected(d),
         available_fn=lambda d: _primary_pool_rejected(d) is not None,
@@ -142,6 +148,7 @@ MINER_SENSORS: tuple[MinerSensorEntityDescription, ...] = (
     MinerSensorEntityDescription(
         key="pool_url",
         name="Active Pool",
+        icon="mdi:swim",
         value_fn=lambda d: _primary_pool_url(d),
         available_fn=lambda d: _primary_pool_url(d) is not None,
     ),
@@ -185,6 +192,7 @@ def _board_sensors(position: int) -> list[MinerSensorEntityDescription]:
         MinerSensorEntityDescription(
             key=f"board_{n}_hashrate",
             name=f"Board {n} Hashrate",
+            icon="mdi:pickaxe",
             native_unit_of_measurement=UNIT_TH_S,
             state_class=SensorStateClass.MEASUREMENT,
             suggested_display_precision=2,
@@ -244,6 +252,7 @@ def _board_sensors(position: int) -> list[MinerSensorEntityDescription]:
         MinerSensorEntityDescription(
             key=f"board_{n}_working_chips",
             name=f"Board {n} Working Chips",
+            icon="mdi:chip",
             state_class=SensorStateClass.MEASUREMENT,
             value_fn=lambda d, _n=n: _board_value(d, _n, lambda b: b.working_chips),
             available_fn=lambda d, _n=n: (
@@ -295,6 +304,7 @@ def _fan_sensor(position: int, psu: bool = False) -> MinerSensorEntityDescriptio
     return MinerSensorEntityDescription(
         key=f"{key_prefix}_{position}_rpm",
         name=f"{prefix} {position} RPM",
+        icon="mdi:fan",
         native_unit_of_measurement=UNIT_RPM,
         state_class=SensorStateClass.MEASUREMENT,
         suggested_display_precision=0,
