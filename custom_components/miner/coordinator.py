@@ -187,6 +187,9 @@ class MinerCoordinator(DataUpdateCoordinator):
         mac = miner_data.mac or self.config_entry.data.get(CONF_MAC)
         if mac is None:
             return self._handle_failure("Miner did not report a MAC address yet")
+        # Normalise case: some firmwares flip between upper/lower-case MACs across
+        # versions, which would otherwise yield two devices for one miner.
+        mac = str(mac).upper()
         if self.config_entry.data.get(CONF_MAC) != mac:
             self.hass.config_entries.async_update_entry(
                 self.config_entry, data={**self.config_entry.data, CONF_MAC: mac}

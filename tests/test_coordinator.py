@@ -166,3 +166,39 @@ async def test_get_data_generic_error_at_setup_retries(
     assert not await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
     assert config_entry.state is ConfigEntryState.SETUP_RETRY
+
+
+async def test_stale_device_can_be_removed_but_live_one_cannot(
+    hass, config_entry, mock_get_miner
+):
+    """Devices not matching the pinned MAC (e.g. lowercase leftover) are removable from the UI."""
+    from custom_components.miner import async_remove_config_entry_device
+
+    await _setup(hass, config_entry)
+    dev_reg = dr.async_get(hass)
+    live = dr.async_entries_for_config_entry(dev_reg, config_entry.entry_id)[0]
+    stale = dev_reg.async_get_or_create(
+        config_entry_id=config_entry.entry_id,
+        identifiers={(DOMAIN, MAC.lower())},  # lowercase leftover of the same MAC
+        name="stale",
+    )
+    assert not await async_remove_config_entry_device(hass, config_entry, live)
+    assert await async_remove_config_entry_device(hass, config_entry, stale)
+
+
+async def test_lowercase_mac_is_normalised_to_pinned_uppercase(
+    hass, config_entry, fake_miner, mock_get_miner
+):
+    """Firmware flipping MAC case must not create a second device."""
+    await _setup(hass, config_entry)
+    before = _entity_ids(hass, config_entry)
+    fake_miner.get_data = AsyncMock(return_value=FakeMinerData(mac=MAC.lower()))
+    await _tick(hass)
+    coordinator = hass.data[DOMAIN][config_entry.entry_id]
+    assert coordinator.data["mac"] == MAC
+    assert config_entry.data[CONF_MAC] == MAC
+    await hass.config_entries.async_reload(config_entry.entry_id)
+    await hass.async_block_till_done()
+    assert _entity_ids(hass, config_entry) == before
+    dev_reg = dr.async_get(hass)
+    assert len(dr.async_entries_for_config_entry(dev_reg, config_entry.entry_id)) == 1
