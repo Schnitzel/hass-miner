@@ -4,6 +4,7 @@ from __future__ import annotations
 import os
 import site
 import sys
+import threading
 from subprocess import PIPE
 from subprocess import Popen
 
@@ -24,6 +25,7 @@ def install_package(
     constraints: str | None = None,
     timeout: int | None = None,
     force_reinstall: bool = False,
+    reinstall_package: str | None = None,
 ) -> bool:
     """Install a package on PyPi. Accepts pip compatible package strings.
 
@@ -53,6 +55,10 @@ def install_package(
         args.append("--upgrade")
     if force_reinstall:
         args.append("--reinstall")
+    if reinstall_package:
+        # Reinstall only this distribution, leaving already-imported shared
+        # dependencies (cryptography, pydantic, httpx, ...) untouched on disk.
+        args += ["--reinstall-package", reinstall_package]
     if constraints is not None:
         args += ["--constraint", constraints]
     if target:
@@ -89,3 +95,54 @@ def install_package(
             return False
 
     return True
+
+
+_PYASIC_LOCK = threading.Lock()
+
+
+def _import_pyasic(expected_version: str):
+    """Import pyasic and validate it; raise ImportError if unusable."""
+    from importlib.metadata import PackageNotFoundError, version
+
+    import pyasic
+
+    if not hasattr(pyasic, "get_miner"):
+        raise ImportError("pyasic module incomplete")
+    try:
+        installed = version("pyasic")
+    except PackageNotFoundError as err:
+        raise ImportError("pyasic metadata missing") from err
+    if installed != expected_version:
+        raise ImportError(f"pyasic {installed} != required {expected_version}")
+    return pyasic
+
+
+def _purge_pyasic_modules() -> None:
+    for mod_name in list(sys.modules):
+        if mod_name == "pyasic" or mod_name.startswith("pyasic."):
+            del sys.modules[mod_name]
+
+
+def ensure_pyasic(expected_version: str):
+    """Return an importable, correctly-versioned pyasic, installing if needed.
+
+    Must be called from an executor thread. Serialized with a process-wide lock:
+    on a fresh container (e.g. after a Core update) several config entries set up
+    concurrently, and without the lock one entry runs ``uv pip install --reinstall``
+    while others import a half-unpacked package -> ModuleNotFoundError -> setup_error.
+    """
+    with _PYASIC_LOCK:
+        try:
+            return _import_pyasic(expected_version)
+        except Exception as err:  # noqa: BLE001 - any import failure means reinstall
+            _LOGGER.info("pyasic unusable (%s); (re)installing %s", err, expected_version)
+
+        _purge_pyasic_modules()
+        if not install_package(
+            f"pyasic=={expected_version}",
+            upgrade=False,
+            reinstall_package="pyasic",
+        ):
+            raise ImportError(f"Failed to install pyasic=={expected_version}")
+        _purge_pyasic_modules()
+        return _import_pyasic(expected_version)
