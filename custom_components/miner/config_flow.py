@@ -1,7 +1,5 @@
 """Config flow for Miner."""
 import logging
-import sys
-from importlib.metadata import version
 
 import voluptuous as vol
 from homeassistant import config_entries
@@ -22,6 +20,7 @@ from .const import CONF_WEB_PASSWORD
 from .const import CONF_WEB_USERNAME
 from .const import DOMAIN
 from .const import PYASIC_VERSION
+from .patch import ensure_pyasic
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -37,29 +36,7 @@ def _ensure_pyasic():
     if pyasic is not None:
         return
 
-    def try_import():
-        try:
-            import pyasic as _pyasic
-            if not hasattr(_pyasic, 'get_miner'):
-                raise ImportError("pyasic module incomplete")
-            if version("pyasic") != PYASIC_VERSION:
-                raise ImportError("Version mismatch")
-            return _pyasic
-        except Exception:
-            return None
-
-    _pyasic = try_import()
-    if _pyasic is None:
-        # Clear any cached broken imports before reinstalling
-        for mod_name in list(sys.modules.keys()):
-            if mod_name.startswith('pyasic'):
-                del sys.modules[mod_name]
-
-        from .patch import install_package
-        install_package(f"pyasic=={PYASIC_VERSION}", force_reinstall=True)
-
-        import pyasic as _pyasic
-
+    _pyasic = ensure_pyasic(PYASIC_VERSION)
     pyasic = _pyasic
     from pyasic import MinerNetwork as _MinerNetwork
     MinerNetwork = _MinerNetwork
