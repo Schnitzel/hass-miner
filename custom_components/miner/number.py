@@ -6,6 +6,7 @@ import logging
 from homeassistant.components.number import NumberEntityDescription, NumberDeviceClass
 from homeassistant.components.number import NumberEntity
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.core import callback
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry
@@ -39,7 +40,6 @@ async def async_setup_entry(
     """Add sensors for passed config_entry in HA."""
     coordinator: MinerCoordinator = hass.data[DOMAIN][config_entry.entry_id]
 
-    await coordinator.async_config_entry_first_refresh()
     if coordinator.miner.supports_autotuning:
         async_add_entities(
             [
@@ -110,7 +110,6 @@ class MinerPowerLimitNumber(CoordinatorEntity[MinerCoordinator], NumberEntity):
 
     async def async_set_native_value(self, value):
         """Update the current value."""
-        import pyasic  # lazy import to avoid blocking event loop
 
         miner = self.coordinator.miner
 
@@ -119,14 +118,24 @@ class MinerPowerLimitNumber(CoordinatorEntity[MinerCoordinator], NumberEntity):
         )
 
         if not miner.supports_autotuning:
-            raise TypeError(
+            raise HomeAssistantError(
                 f"{self.coordinator.config_entry.title}: Tuning not supported."
             )
 
-        result = await miner.set_power_limit(int(value))
+        try:
+            result = await miner.set_power_limit(int(value))
+        except ValueError as err:
+            # e.g. VNish with no tuned presets: pyasic does max() on an empty list (#564)
+            raise HomeAssistantError(
+                f"{self.coordinator.config_entry.title}: cannot set power limit - "
+                "the miner reports no tunable power presets. Tune at least one "
+                f"preset in the miner firmware first ({err})."
+            ) from err
 
         if not result:
-            raise pyasic.APIError("Failed to set wattage.")
+            raise HomeAssistantError(
+                f"{self.coordinator.config_entry.title}: miner rejected power limit {int(value)} W."
+            )
 
         self._attr_native_value = value
         self.async_write_ha_state()

@@ -38,3 +38,6 @@ ignore = [
     "E731", # do not assign a lambda expression, use a def
     "C901", # do not check complexity
 ]
+
+[lint.per-file-ignores]
+"tests/**" = ["D"]

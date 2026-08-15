@@ -22,12 +22,25 @@
         "data": {
           "title": "[%key:common::config_flow::data::title%]"
         }
+      },
+      "reconfigure": {
+        "title": "Reconfigure miner",
+        "description": "Change the IP address or power range of this miner.",
+        "data": {
+          "ip": "IP address",
+          "min_power": "Minimum power (W)",
+          "max_power": "Maximum power (W)"
+        }
       }
+    },
+    "error": {
+      "different_miner": "The device at this IP is a different miner (MAC mismatch)."
     },
     "abort": {
       "single_instance_allowed": "[%key:common::config_flow::abort::single_instance_allowed%]",
       "no_devices_found": "[%key:common::config_flow::abort::no_devices_found%]",
-      "already_configured": "[%key:common::config_flow::abort::already_configured%]"
+      "already_configured": "[%key:common::config_flow::abort::already_configured%]",
+      "reconfigure_successful": "Reconfiguration successful"
     }
   },
   "services": {

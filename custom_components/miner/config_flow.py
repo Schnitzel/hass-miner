@@ -10,6 +10,7 @@ from homeassistant.helpers.selector import TextSelectorConfig
 from homeassistant.helpers.selector import TextSelectorType
 
 from .const import CONF_IP
+from .const import CONF_MAC
 from .const import CONF_MIN_POWER
 from .const import CONF_MAX_POWER
 from .const import CONF_RPC_PASSWORD
@@ -229,6 +230,46 @@ class MinerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._data.update(user_input)
 
         return self.async_create_entry(title=self._data[CONF_TITLE], data=self._data)
+
+    async def async_step_reconfigure(self, user_input=None):
+        """Change the IP address (and power range) of an existing miner (#440)."""
+        entry = self._get_reconfigure_entry()
+        current = dict(entry.data)
+        errors = {}
+
+        if user_input is not None:
+            errors, miner = await validate_ip_input(self.hass, user_input)
+            if not errors:
+                new_mac = await miner.get_mac()
+                if new_mac and current.get(CONF_MAC) and new_mac != current[CONF_MAC]:
+                    errors = {"base": "different_miner"}
+            if not errors:
+                return self.async_update_reload_and_abort(
+                    entry, data={**current, **user_input}
+                )
+        else:
+            user_input = {}
+
+        schema = vol.Schema(
+            {
+                vol.Required(
+                    CONF_IP, default=user_input.get(CONF_IP, current.get(CONF_IP, ""))
+                ): str,
+                vol.Optional(
+                    CONF_MIN_POWER,
+                    default=user_input.get(CONF_MIN_POWER, current.get(CONF_MIN_POWER, 15)),
+                ): vol.All(vol.Coerce(int), vol.Range(min=15, max=10000)),
+                vol.Optional(
+                    CONF_MAX_POWER,
+                    default=user_input.get(
+                        CONF_MAX_POWER, current.get(CONF_MAX_POWER, 10000)
+                    ),
+                ): vol.All(vol.Coerce(int), vol.Range(min=15, max=10000)),
+            }
+        )
+        return self.async_show_form(
+            step_id="reconfigure", data_schema=schema, errors=errors
+        )
 
     async def async_step_discovery(self, discovery_info):
         """Handle discovery."""

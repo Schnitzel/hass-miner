@@ -1,0 +1,5 @@
+homeassistant==2026.8.2
+pytest-homeassistant-custom-component
+# pyasic pins a pre-release betterproto; pin it explicitly so pip does not need --pre
+betterproto==2.0.0b7
+pyasic==0.78.8
