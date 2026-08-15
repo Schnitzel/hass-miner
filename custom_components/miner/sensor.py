@@ -146,7 +146,6 @@ async def async_setup_entry(
             entity_description=description,
         )
 
-    await coordinator.async_config_entry_first_refresh()
 
     sensors = []
     for s in coordinator.data["miner_sensors"]:

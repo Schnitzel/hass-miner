@@ -8,11 +8,13 @@ if TYPE_CHECKING:
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.debounce import Debouncer
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.helpers.update_coordinator import UpdateFailed
 
 from .const import CONF_IP
+from .const import CONF_MAC
 from .const import CONF_MIN_POWER
 from .const import CONF_MAX_POWER
 from .const import CONF_RPC_PASSWORD
@@ -49,6 +51,18 @@ DEFAULT_DATA = {
 }
 
 
+def _offline_data(entry: ConfigEntry) -> dict:
+    """Zeroed data for an unreachable miner, keeping the pinned MAC."""
+    return {
+        **DEFAULT_DATA,
+        "mac": entry.data.get(CONF_MAC),
+        "power_limit_range": {
+            "min": entry.data.get(CONF_MIN_POWER, 15),
+            "max": entry.data.get(CONF_MAX_POWER, 10000),
+        },
+    }
+
+
 class MinerCoordinator(DataUpdateCoordinator):
     """Class to manage fetching update data from the Miner."""
 
@@ -58,6 +72,7 @@ class MinerCoordinator(DataUpdateCoordinator):
         """Initialize MinerCoordinator object."""
         self.miner = None
         self._failure_count = 0
+        self._ever_succeeded = False
         super().__init__(
             hass=hass,
             logger=_LOGGER,
@@ -100,6 +115,26 @@ class MinerCoordinator(DataUpdateCoordinator):
             self.miner.ssh.pwd = self.config_entry.data.get(CONF_SSH_PASSWORD, "")
         return self.miner
 
+    def _handle_failure(self, reason: str, err: Exception | None = None) -> dict:
+        """Handle a failed poll.
+
+        During initial setup we must never hand back placeholder data: entities
+        would be created with ``mac=None`` unique_ids and a second device would
+        appear once the miner answers properly (issue #593). Raise
+        ConfigEntryNotReady so HA retries setup instead.
+
+        After setup, tolerate a single failure (return zeroed data so totals stay
+        sane, issue #538) and mark unavailable on consecutive failures.
+        """
+        if not self._ever_succeeded:
+            raise ConfigEntryNotReady(reason) from err
+
+        self._failure_count += 1
+        if self._failure_count == 1:
+            _LOGGER.warning("%s - returning zeroed data (first failure).", reason)
+            return _offline_data(self.config_entry)
+        raise UpdateFailed(reason) from err
+
     async def _async_update_data(self):
         """Fetch sensors from miners."""
         import pyasic  # lazy import to avoid blocking event loop
@@ -107,21 +142,7 @@ class MinerCoordinator(DataUpdateCoordinator):
         miner = await self.get_miner()
 
         if miner is None:
-            self._failure_count += 1
-
-            if self._failure_count == 1:
-                _LOGGER.warning(
-                    "Miner is offline – returning zeroed data (first failure)."
-                )
-                return {
-                    **DEFAULT_DATA,
-                    "power_limit_range": {
-                        "min": self.config_entry.data.get(CONF_MIN_POWER, 15),
-                        "max": self.config_entry.data.get(CONF_MAX_POWER, 10000),
-                    },
-                }
-
-            raise UpdateFailed("Miner Offline (consecutive failure)")
+            return self._handle_failure("Miner Offline")
 
         # At this point, miner is valid
         _LOGGER.debug(f"Found miner: {self.miner}")
@@ -145,50 +166,38 @@ class MinerCoordinator(DataUpdateCoordinator):
             miner_data = await self.miner.get_data(include=data_options)
         except Exception as err:
             # VNish firmware has a bug with CONFIG - retry without it
-            if "config" in str(err).lower():
-                _LOGGER.warning(
-                    f"Config fetch failed for {self.miner}, retrying without CONFIG: {err}"
+            if "config" not in str(err).lower():
+                return self._handle_failure(f"Error fetching miner data: {err}", err)
+            _LOGGER.warning(
+                f"Config fetch failed for {self.miner}, retrying without CONFIG: {err}"
+            )
+            data_options.remove(pyasic.DataOptions.CONFIG)
+            try:
+                miner_data = await self.miner.get_data(include=data_options)
+            except Exception as retry_err:
+                return self._handle_failure(
+                    f"Error fetching miner data: {retry_err}", retry_err
                 )
-                data_options.remove(pyasic.DataOptions.CONFIG)
-                try:
-                    miner_data = await self.miner.get_data(include=data_options)
-                except Exception as retry_err:
-                    self._failure_count += 1
-                    if self._failure_count == 1:
-                        _LOGGER.warning(
-                            f"Error fetching miner data: {retry_err} – returning zeroed data (first failure)."
-                        )
-                        return {
-                            **DEFAULT_DATA,
-                            "power_limit_range": {
-                                "min": self.config_entry.data.get(CONF_MIN_POWER, 15),
-                                "max": self.config_entry.data.get(CONF_MAX_POWER, 10000),
-                            },
-                        }
-                    _LOGGER.exception(retry_err)
-                    raise UpdateFailed from retry_err
-            else:
-                self._failure_count += 1
-
-                if self._failure_count == 1:
-                    _LOGGER.warning(
-                        f"Error fetching miner data: {err} – returning zeroed data (first failure)."
-                    )
-                    return {
-                        **DEFAULT_DATA,
-                        "power_limit_range": {
-                            "min": self.config_entry.data.get(CONF_MIN_POWER, 15),
-                            "max": self.config_entry.data.get(CONF_MAX_POWER, 10000),
-                        },
-                    }
-
-                _LOGGER.exception(err)
-                raise UpdateFailed from err
 
         _LOGGER.debug(f"Got data: {miner_data}")
 
+        # Pin the MAC: it is the unique_id/device identifier for every entity.
+        # A miner that is still booting can answer with mac=None; fall back to
+        # the MAC we saw earlier rather than creating a second device (#593).
+        mac = miner_data.mac or self.config_entry.data.get(CONF_MAC)
+        if mac is None:
+            return self._handle_failure("Miner did not report a MAC address yet")
+        # Normalise case: some firmwares flip between upper/lower-case MACs across
+        # versions, which would otherwise yield two devices for one miner.
+        mac = str(mac).upper()
+        if self.config_entry.data.get(CONF_MAC) != mac:
+            self.hass.config_entries.async_update_entry(
+                self.config_entry, data={**self.config_entry.data, CONF_MAC: mac}
+            )
+
         # Success: reset the failure count
         self._failure_count = 0
+        self._ever_succeeded = True
 
         try:
             hashrate = round(float(miner_data.hashrate), 2)
@@ -207,7 +216,7 @@ class MinerCoordinator(DataUpdateCoordinator):
 
         data = {
             "hostname": miner_data.hostname,
-            "mac": miner_data.mac,
+            "mac": mac,
             "make": miner_data.make,
             "model": miner_data.model,
             "ip": self.miner.ip,

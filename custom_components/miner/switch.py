@@ -31,7 +31,6 @@ async def async_setup_entry(
         """Create a sensor entity."""
         created.add(key)
 
-    await coordinator.async_config_entry_first_refresh()
     if coordinator.miner.supports_shutdown:
         async_add_entities(
             [

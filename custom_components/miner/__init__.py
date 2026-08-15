@@ -1,16 +1,17 @@
 """The Miner integration."""
 from __future__ import annotations
 
-import sys
-
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.helpers.device_registry import DeviceEntry
 
 from .const import CONF_IP
+from .const import CONF_MAC
 from .const import DOMAIN
 from .const import PYASIC_VERSION
+from .patch import ensure_pyasic
 
 PLATFORMS: list[Platform] = [
     Platform.SENSOR,
@@ -22,34 +23,7 @@ PLATFORMS: list[Platform] = [
 
 def _ensure_pyasic():
     """Ensure pyasic is installed and imported (runs in executor)."""
-
-    def try_import():
-        try:
-            from importlib.metadata import version
-            import pyasic
-            if not hasattr(pyasic, 'get_miner'):
-                raise ImportError("pyasic module incomplete")
-            if version("pyasic") != PYASIC_VERSION:
-                raise ImportError("Version mismatch")
-            return pyasic
-        except Exception:
-            return None
-
-    pyasic = try_import()
-    if pyasic:
-        return pyasic
-
-    # Need to install/reinstall
-    from .patch import install_package
-    install_package(f"pyasic=={PYASIC_VERSION}", force_reinstall=True)
-
-    # Clear any cached broken imports
-    for mod_name in list(sys.modules.keys()):
-        if mod_name.startswith('pyasic'):
-            del sys.modules[mod_name]
-
-    import pyasic
-    return pyasic
+    return ensure_pyasic(PYASIC_VERSION)
 
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
@@ -88,3 +62,21 @@ async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> 
         hass.data[DOMAIN].pop(config_entry.entry_id)
 
     return unload_ok
+
+
+async def async_remove_config_entry_device(
+    hass: HomeAssistant, config_entry: ConfigEntry, device_entry: DeviceEntry
+) -> bool:
+    """Allow deleting stale devices from the UI (#593 leftovers).
+
+    Only the device whose identifier is exactly the MAC pinned in the config
+    entry is live; anything else attached to this entry (a device keyed on a
+    lowercase or missing MAC from an earlier version) can be removed. The
+    comparison is deliberately case-sensitive: the stale duplicate typically
+    differs from the live device only by MAC letter case.
+    """
+    mac = config_entry.data.get(CONF_MAC)
+    return not any(
+        domain == DOMAIN and mac is not None and str(ident) == mac
+        for domain, ident in device_entry.identifiers
+    )
