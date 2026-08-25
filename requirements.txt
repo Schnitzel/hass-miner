@@ -1,7 +1,7 @@
-colorlog==6.8.2
+colorlog==6.10.1
 homeassistant>=2025.1.1
-pip>=21.0,<23.2
-ruff==0.6.9
-pyasic==0.68.54
-setuptools==75.1.0
+pip>=26.1
+ruff==0.15.11
+pyasic==0.78.10
+setuptools==82.0.1
 pre-commit
