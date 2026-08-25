@@ -18,3 +18,5 @@ config/*
 !config/configuration.yaml
 
 .DS_STORE
+.DS_Store
+.DS_Store/
