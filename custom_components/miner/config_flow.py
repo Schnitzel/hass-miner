@@ -1,265 +1,251 @@
-"""Config flow for Miner."""
-import logging
-import sys
-from importlib.metadata import version
+"""Config flow for ASIC Miner integration."""
+
+from __future__ import annotations
+
+import asyncio
+from contextlib import suppress
 
 import voluptuous as vol
 from homeassistant import config_entries
-from homeassistant.components import network
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers.selector import TextSelector
-from homeassistant.helpers.selector import TextSelectorConfig
-from homeassistant.helpers.selector import TextSelectorType
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME
+from homeassistant.core import callback
+from homeassistant.data_entry_flow import FlowResult
+from homeassistant.helpers.selector import (
+    NumberSelector,
+    NumberSelectorConfig,
+    NumberSelectorMode,
+)
 
-from .const import CONF_IP
-from .const import CONF_MIN_POWER
-from .const import CONF_MAX_POWER
-from .const import CONF_RPC_PASSWORD
-from .const import CONF_SSH_PASSWORD
-from .const import CONF_SSH_USERNAME
-from .const import CONF_TITLE
-from .const import CONF_WEB_PASSWORD
-from .const import CONF_WEB_USERNAME
-from .const import DOMAIN
-from .const import PYASIC_VERSION
+from pyasic_rs import MinerFactory
 
-_LOGGER = logging.getLogger(__name__)
+from .const import (
+    CONF_SCAN_INTERVAL,
+    DEFAULT_SCAN_INTERVAL,
+    DOMAIN,
+    MAX_SCAN_INTERVAL,
+    MIN_SCAN_INTERVAL,
+)
+from .discovery import async_default_subnet, async_scan_subnet
 
-# Lazy import - will be populated when needed
-pyasic = None
-MinerNetwork = None
-MinerMake = None
+CONF_SUBNET = "subnet"
+CONF_SELECTED_MINER = "selected_miner"
 
+STEP_MANUAL_SCHEMA = vol.Schema(
+    {
+        vol.Required(CONF_HOST): str,
+        vol.Optional(CONF_USERNAME, default=""): str,
+        vol.Optional(CONF_PASSWORD, default=""): str,
+    }
+)
 
-def _ensure_pyasic():
-    """Ensure pyasic is installed and imported."""
-    global pyasic, MinerNetwork, MinerMake
-    if pyasic is not None:
-        return
-
-    def try_import():
-        try:
-            import pyasic as _pyasic
-            if not hasattr(_pyasic, 'get_miner'):
-                raise ImportError("pyasic module incomplete")
-            if version("pyasic") != PYASIC_VERSION:
-                raise ImportError("Version mismatch")
-            return _pyasic
-        except Exception:
-            return None
-
-    _pyasic = try_import()
-    if _pyasic is None:
-        # Clear any cached broken imports before reinstalling
-        for mod_name in list(sys.modules.keys()):
-            if mod_name.startswith('pyasic'):
-                del sys.modules[mod_name]
-
-        from .patch import install_package
-        install_package(f"pyasic=={PYASIC_VERSION}", force_reinstall=True)
-
-        import pyasic as _pyasic
-
-    pyasic = _pyasic
-    from pyasic import MinerNetwork as _MinerNetwork
-    MinerNetwork = _MinerNetwork
-    from pyasic.device.makes import MinerMake as _MinerMake
-    MinerMake = _MinerMake
+STEP_CREDENTIALS_SCHEMA = vol.Schema(
+    {
+        vol.Optional(CONF_USERNAME, default=""): str,
+        vol.Optional(CONF_PASSWORD, default=""): str,
+    }
+)
 
 
-async def _async_has_devices(hass: HomeAssistant) -> bool:
-    """Return if there are devices that can be discovered."""
-    await hass.async_add_executor_job(_ensure_pyasic)
-    adapters = await network.async_get_adapters(hass)
-
-    for adapter in adapters:
-        for ip_info in adapter["ipv4"]:
-            local_ip = ip_info["address"]
-            network_prefix = ip_info["network_prefix"]
-            miner_net = MinerNetwork.from_subnet(f"{local_ip}/{network_prefix}")
-            miners = await miner_net.scan()
-            if len(miners) > 0:
-                return True
-    return False
-
-
-async def validate_ip_input(
-    hass: HomeAssistant,
-    data: dict[str, str]
-):
-    """Validate the user input allows us to connect."""
-    await hass.async_add_executor_job(_ensure_pyasic)
-    miner_ip = data.get(CONF_IP)
-
-    miner = await pyasic.get_miner(miner_ip)
+async def _connect_and_title(ip: str, username: str = "", password: str = "") -> tuple:
+    """Connect to a miner and return (miner, title). Raises ConnectionError on failure."""
+    factory = MinerFactory()
+    miner = await factory.get_miner(ip)
     if miner is None:
-        return {"base": "Unable to connect to Miner, is IP correct?"}, None
+        raise ConnectionError
+    if username and password:
+        miner.set_auth(username, password)
+    title = f"{miner.make} {miner.model} ({ip})"
+    return miner, title
 
-    return {}, miner
 
-
-class MinerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    """Handle a config flow for Miner."""
+class AsicMinerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+    """Handle a config flow for ASIC Miner."""
 
     VERSION = 1
 
-    def __init__(self):
-        """Initialize."""
-        self._data = {}
-        self._miner = None
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry: ConfigEntry) -> AsicMinerOptionsFlow:
+        return AsicMinerOptionsFlow()
 
-    async def async_step_user(self, user_input=None):
-        """Get miner IP and check if it is available."""
-        if user_input is None:
-            user_input = {}
+    def __init__(self) -> None:
+        self._subnet: str = ""
+        self._discovered: dict[str, str] = {}  # ip -> "Make Model (ip)"
+        self._scan_task: asyncio.Task | None = None
+        self._selected_ip: str = ""
 
-        schema = vol.Schema(
-            {
-                vol.Required(CONF_IP, default=user_input.get(CONF_IP, "")): str,
-                vol.Optional(CONF_MIN_POWER, default=15): vol.All(
-                    vol.Coerce(int), vol.Range(min=15, max=10000)
-                ),
-                vol.Optional(CONF_MAX_POWER, default=10000): vol.All(
-                    vol.Coerce(int), vol.Range(min=15, max=10000)
-                ),
-            }
+    # ── Entry point: menu ─────────────────────────────────────────────────
+
+    async def async_step_user(self, user_input=None) -> FlowResult:
+        return self.async_show_menu(
+            step_id="user",
+            menu_options=["manual", "scan"],
         )
 
-        if not user_input:
-            return self.async_show_form(step_id="user", data_schema=schema)
+    async def async_step_integration_discovery(
+        self, discovery_info: dict[str, str]
+    ) -> FlowResult:
+        """Handle a miner found by the automatic network scan."""
+        self._selected_ip = discovery_info[CONF_HOST]
+        await self.async_set_unique_id(self._selected_ip)
+        self._abort_if_unique_id_configured()
+        self.context["title_placeholders"] = {"name": discovery_info["title"]}
+        return await self.async_step_credentials()
 
-        errors, miner = await validate_ip_input(self.hass, user_input)
+    # ── Manual path ───────────────────────────────────────────────────────
 
-        if errors:
+    async def async_step_manual(self, user_input=None) -> FlowResult:
+        errors: dict[str, str] = {}
+
+        if user_input is not None:
+            ip = user_input[CONF_HOST]
+            username = user_input.get(CONF_USERNAME) or ""
+            password = user_input.get(CONF_PASSWORD) or ""
+            try:
+                _, title = await _connect_and_title(ip, username, password)
+            except ConnectionError:
+                errors["base"] = "cannot_connect"
+            except Exception:  # noqa: BLE001
+                errors["base"] = "unknown"
+            else:
+                await self.async_set_unique_id(ip)
+                self._abort_if_unique_id_configured()
+                data = {CONF_HOST: ip}
+                if username:
+                    data[CONF_USERNAME] = username
+                if password:
+                    data[CONF_PASSWORD] = password
+                return self.async_create_entry(title=title, data=data)
+
+        return self.async_show_form(
+            step_id="manual",
+            data_schema=STEP_MANUAL_SCHEMA,
+            errors=errors,
+        )
+
+    # ── Scan path: subnet form ────────────────────────────────────────────
+
+    async def async_step_scan(self, user_input=None) -> FlowResult:
+        if user_input is not None:
+            self._subnet = user_input[CONF_SUBNET]
+            return await self.async_step_scanning()
+
+        default = await async_default_subnet(self.hass)
+        return self.async_show_form(
+            step_id="scan",
+            data_schema=vol.Schema({vol.Required(CONF_SUBNET, default=default): str}),
+        )
+
+    # ── Scan path: progress ───────────────────────────────────────────────
+
+    async def async_step_scanning(self, user_input=None) -> FlowResult:
+        if self._scan_task is None:
+            self._scan_task = self.hass.async_create_task(self._do_scan(self._subnet))
+
+        if not self._scan_task.done():
+            return self.async_show_progress(
+                step_id="scanning",
+                progress_action="scanning",
+                progress_task=self._scan_task,
+            )
+
+        self._scan_task = None
+        return self.async_show_progress_done(next_step_id="pick_miner")
+
+    async def _do_scan(self, subnet: str) -> None:
+        """Populate self._discovered by scanning the subnet."""
+        self._discovered = {}
+        with suppress(Exception):
+            self._discovered = await async_scan_subnet(subnet)
+
+    # ── Scan path: pick miner ─────────────────────────────────────────────
+
+    async def async_step_pick_miner(self, user_input=None) -> FlowResult:
+        if not self._discovered:
             return self.async_show_form(
-                step_id="user", data_schema=schema, errors=errors
+                step_id="scan",
+                data_schema=vol.Schema(
+                    {vol.Required(CONF_SUBNET, default=self._subnet): str}
+                ),
+                errors={"base": "no_miners_found"},
             )
 
-        self._miner = miner
-        self._data.update(user_input)
-        return await self.async_step_login()
+        if user_input is not None:
+            self._selected_ip = user_input[CONF_SELECTED_MINER]
+            return await self.async_step_credentials()
 
-    async def async_step_login(self, user_input=None):
-        """Get miner login credentials."""
-        if user_input is None:
-            user_input = {}
-
-        # Detect BitAxe miners and skip credential prompts
-        if self._miner.make == MinerMake.BITAXE:
-            return await self.async_step_title()
-
-        schema_data = {}
-
-        if self._miner.rpc is not None:
-            if self._miner.rpc.pwd is not None:
-                schema_data[
-                    vol.Optional(
-                        CONF_RPC_PASSWORD,
-                        default=user_input.get(
-                            CONF_RPC_PASSWORD,
-                            self._miner.rpc.pwd
-                            if self._miner.api.pwd is not None
-                            else "",
-                        ),
-                    )
-                ] = TextSelector(
-                    TextSelectorConfig(
-                        type=TextSelectorType.PASSWORD, autocomplete="current-password"
-                    )
-                )
-
-        if self._miner.web is not None:
-            schema_data[
-                vol.Optional(
-                    CONF_WEB_USERNAME,
-                    default=user_input.get(CONF_WEB_USERNAME, self._miner.web.username),
-                )
-            ] = str
-            schema_data[
-                vol.Optional(
-                    CONF_WEB_PASSWORD,
-                    default=user_input.get(
-                        CONF_WEB_PASSWORD,
-                        self._miner.web.pwd if self._miner.web.pwd is not None else "",
-                    ),
-                )
-            ] = TextSelector(
-                TextSelectorConfig(
-                    type=TextSelectorType.PASSWORD, autocomplete="current-password"
-                )
-            )
-
-        if self._miner.ssh is not None:
-            schema_data[
-                vol.Required(
-                    CONF_SSH_USERNAME,
-                    default=user_input.get(CONF_SSH_USERNAME, self._miner.ssh.username),
-                )
-            ] = str
-            schema_data[
-                vol.Optional(
-                    CONF_SSH_PASSWORD,
-                    default=user_input.get(
-                        CONF_SSH_PASSWORD,
-                        self._miner.ssh.pwd if self._miner.ssh.pwd is not None else "",
-                    ),
-                )
-            ] = TextSelector(
-                TextSelectorConfig(
-                    type=TextSelectorType.PASSWORD, autocomplete="current-password"
-                )
-            )
-
-        schema = vol.Schema(schema_data)
-        if not user_input:
-            if len(schema_data) == 0:
-                return await self.async_step_title()
-            return self.async_show_form(step_id="login", data_schema=schema)
-
-        self._data.update(user_input)
-        return await self.async_step_title()
-
-    async def async_step_title(self, user_input=None):
-        """Get entity title."""
-        if self._miner.api is not None:
-            if self._miner.api.pwd is not None:
-                self._miner.api.pwd = self._data.get(CONF_RPC_PASSWORD, "")
-
-        if self._miner.web is not None:
-            self._miner.web.username = self._data.get(CONF_WEB_USERNAME, "")
-            self._miner.web.pwd = self._data.get(CONF_WEB_PASSWORD, "")
-
-        if self._miner.ssh is not None:
-            self._miner.ssh.username = self._data.get(CONF_SSH_USERNAME, "")
-            self._miner.ssh.pwd = self._data.get(CONF_SSH_PASSWORD, "")
-
-        title = await self._miner.get_hostname()
-
-        if user_input is None:
-            user_input = {}
-
-        data_schema = vol.Schema(
-            {
-                vol.Required(
-                    CONF_TITLE,
-                    default=user_input.get(CONF_TITLE, title),
-                ): str,
-            }
+        return self.async_show_form(
+            step_id="pick_miner",
+            data_schema=vol.Schema(
+                {vol.Required(CONF_SELECTED_MINER): vol.In(self._discovered)}
+            ),
         )
-        if not user_input:
-            return self.async_show_form(step_id="title", data_schema=data_schema)
 
-        self._data.update(user_input)
+    # ── Scan path: credentials ────────────────────────────────────────────
 
-        return self.async_create_entry(title=self._data[CONF_TITLE], data=self._data)
+    async def async_step_credentials(self, user_input=None) -> FlowResult:
+        errors: dict[str, str] = {}
 
-    async def async_step_discovery(self, discovery_info):
-        """Handle discovery."""
-        if self._async_current_entries():
-            return self.async_abort(reason="already_configured")
+        if user_input is not None:
+            username = user_input.get(CONF_USERNAME) or ""
+            password = user_input.get(CONF_PASSWORD) or ""
+            try:
+                _, title = await _connect_and_title(
+                    self._selected_ip, username, password
+                )
+            except ConnectionError:
+                errors["base"] = "cannot_connect"
+            except Exception:  # noqa: BLE001
+                errors["base"] = "unknown"
+            else:
+                await self.async_set_unique_id(self._selected_ip)
+                self._abort_if_unique_id_configured()
+                data = {CONF_HOST: self._selected_ip}
+                if username:
+                    data[CONF_USERNAME] = username
+                if password:
+                    data[CONF_PASSWORD] = password
+                return self.async_create_entry(title=title, data=data)
 
-        has_devices = await _async_has_devices(self.hass)
-        if not has_devices:
-            return self.async_abort(reason="no_devices_found")
+        return self.async_show_form(
+            step_id="credentials",
+            data_schema=STEP_CREDENTIALS_SCHEMA,
+            description_placeholders={"host": self._selected_ip},
+            errors=errors,
+        )
 
-        return await self.async_step_user()
+
+class AsicMinerOptionsFlow(config_entries.OptionsFlow):
+    """Options flow for ASIC Miner — configurable polling interval."""
+
+    async def async_step_init(self, user_input=None) -> FlowResult:
+        if user_input is not None:
+            return self.async_create_entry(
+                title="",
+                data={**self.config_entry.options, **user_input},
+            )
+
+        scan_interval_select = NumberSelector(
+            NumberSelectorConfig(
+                min=MIN_SCAN_INTERVAL,
+                max=MAX_SCAN_INTERVAL,
+                step=1,
+                unit_of_measurement="s",
+                mode=NumberSelectorMode.BOX,
+            )
+        )
+
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema(
+                {
+                    vol.Optional(
+                        CONF_SCAN_INTERVAL,
+                        default=self.config_entry.options.get(
+                            CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL
+                        ),
+                    ): scan_interval_select,
+                }
+            ),
+        )

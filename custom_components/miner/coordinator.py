@@ -1,242 +1,196 @@
-"""Miner DataUpdateCoordinator."""
+"""DataUpdateCoordinator for ASIC Miner."""
+
+from __future__ import annotations
+
 import logging
 from datetime import timedelta
-from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    import pyasic
-
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.debounce import Debouncer
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
-from homeassistant.helpers.update_coordinator import UpdateFailed
+from homeassistant.helpers.storage import Store
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .const import CONF_IP
-from .const import CONF_MIN_POWER
-from .const import CONF_MAX_POWER
-from .const import CONF_RPC_PASSWORD
-from .const import CONF_SSH_PASSWORD
-from .const import CONF_SSH_USERNAME
-from .const import CONF_WEB_PASSWORD
-from .const import CONF_WEB_USERNAME
+from pyasic_rs import MinerFactory
+from pyasic_rs.data import MinerData
+from pyasic_rs.miner import Miner
+
+from .const import DEFAULT_SCAN_INTERVAL, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
-# Matches iotwatt data log interval
-REQUEST_REFRESH_DEFAULT_COOLDOWN = 5
 
-DEFAULT_DATA = {
-    "hostname": None,
-    "mac": None,
-    "make": None,
-    "model": None,
-    "ip": None,
-    "is_mining": False,
-    "fw_ver": None,
-    "miner_sensors": {
-        "hashrate": 0,
-        "ideal_hashrate": 0,
-        "active_preset_name": None,
-        "temperature": 0,
-        "power_limit": 0,
-        "miner_consumption": 0,
-        "efficiency": 0.0,
-    },
-    "board_sensors": {},
-    "fan_sensors": {},
-    "config": {},
-}
+class MinerCoordinator(DataUpdateCoordinator[MinerData]):
+    """Coordinator that polls a single ASIC miner via pyasic-rs."""
 
+    miner: Miner | None = None
 
-class MinerCoordinator(DataUpdateCoordinator):
-    """Class to manage fetching update data from the Miner."""
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        ip: str,
+        entry_id: str,
+        username: str | None = None,
+        password: str | None = None,
+        scan_interval: int | None = None,
+    ) -> None:
+        self.ip = ip
+        self.username = username
+        self.password = password
 
-    miner: "pyasic.AnyMiner" = None
+        # ── Offline resilience: cached device profile ──────────────────────
+        # Persisted via Store (NOT entry.data — writing entry.data would trigger
+        # the options update listener and a reload-loop). Lets the entry LOAD
+        # with entities (showing unavailable) even when the miner is unreachable
+        # at HA startup. Populated from a successful poll; read as a fallback
+        # when live ``data`` is None.
+        self._store: Store = Store(hass, 1, f"{DOMAIN}_profile_{entry_id}")
+        self.profile: dict | None = None
 
-    def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
-        """Initialize MinerCoordinator object."""
-        self.miner = None
-        self._failure_count = 0
         super().__init__(
-            hass=hass,
-            logger=_LOGGER,
-            config_entry=entry,
-            name=entry.title,
-            update_interval=timedelta(seconds=10),
-            request_refresh_debouncer=Debouncer(
-                hass,
-                _LOGGER,
-                cooldown=REQUEST_REFRESH_DEFAULT_COOLDOWN,
-                immediate=True,
-            ),
+            hass,
+            _LOGGER,
+            name=f"{DOMAIN}_{ip}",
+            update_interval=timedelta(seconds=scan_interval or DEFAULT_SCAN_INTERVAL),
         )
 
+    # ── Cached device profile (offline resilience) ─────────────────────────
+
+    async def async_load_profile(self) -> None:
+        """Load the persisted device profile (None if no file exists yet).
+
+        Called from __init__.py before the first refresh so that platforms can
+        enumerate per-board / per-fan entities from cache when the miner is
+        offline at startup.
+        """
+        self.profile = await self._store.async_load()
+
+    async def _async_store_profile(self, data: MinerData) -> None:
+        """Persist a fresh profile derived from a successful poll, if changed."""
+        profile = {
+            "mac": data.mac,
+            "make": data.device_info.make,
+            "model": data.device_info.model,
+            "fw": data.firmware_version,
+            "board_positions": [b.position for b in data.hashboards],
+            "fan_positions": [f.position for f in data.fans],
+            "psu_fan_positions": [f.position for f in data.psu_fans],
+        }
+        if profile != self.profile:
+            self.profile = profile
+            await self._store.async_save(profile)
+
+    # Helper properties: prefer live ``data``, fall back to the cached profile,
+    # finally a safe default. Used by entity.py and the platform setups so they
+    # work identically online and offline-with-cache.
+
     @property
-    def available(self):
-        """Return if device is available or not."""
-        return self.miner is not None
+    def device_mac(self) -> str | None:
+        data = self.data
+        if data is not None and data.mac:
+            return data.mac
+        if self.profile:
+            return self.profile.get("mac")
+        return None
 
-    async def get_miner(self):
-        """Get a valid Miner instance."""
-        import pyasic  # lazy import to avoid blocking event loop
+    @property
+    def device_make(self) -> str | None:
+        data = self.data
+        if data is not None and data.device_info.make:
+            return data.device_info.make
+        if self.profile:
+            return self.profile.get("make")
+        return None
 
-        miner_ip = self.config_entry.data[CONF_IP]
-        miner = await pyasic.get_miner(miner_ip)
-        if miner is None:
-            return None
+    @property
+    def device_model(self) -> str | None:
+        data = self.data
+        if data is not None and data.device_info.model:
+            return data.device_info.model
+        if self.profile:
+            return self.profile.get("model")
+        return None
+
+    @property
+    def fw_version(self) -> str | None:
+        data = self.data
+        if data is not None and data.firmware_version:
+            return data.firmware_version
+        if self.profile:
+            return self.profile.get("fw")
+        return None
+
+    @property
+    def board_positions(self) -> list[int]:
+        data = self.data
+        if data is not None:
+            return [b.position for b in data.hashboards]
+        if self.profile:
+            return list(self.profile.get("board_positions") or [])
+        return []
+
+    @property
+    def fan_positions(self) -> list[int]:
+        data = self.data
+        if data is not None:
+            return [f.position for f in data.fans]
+        if self.profile:
+            return list(self.profile.get("fan_positions") or [])
+        return []
+
+    @property
+    def psu_fan_positions(self) -> list[int]:
+        data = self.data
+        if data is not None:
+            return [f.position for f in data.psu_fans]
+        if self.profile:
+            return list(self.profile.get("psu_fan_positions") or [])
+        return []
+
+    # ── Setup / update ─────────────────────────────────────────────────────
+
+    async def _async_setup(self) -> None:
+        factory = MinerFactory()
+        try:
+            miner = await factory.get_miner(self.ip)
+        except Exception as err:
+            self.miner = None
+            raise UpdateFailed(f"Error identifying miner at {self.ip}: {err}") from err
 
         self.miner = miner
-        if self.miner.api is not None:
-            if self.miner.api.pwd is not None:
-                self.miner.api.pwd = self.config_entry.data.get(CONF_RPC_PASSWORD, "")
-
-        if self.miner.web is not None:
-            self.miner.web.username = self.config_entry.data.get(CONF_WEB_USERNAME, "")
-            self.miner.web.pwd = self.config_entry.data.get(CONF_WEB_PASSWORD, "")
-
-        if self.miner.ssh is not None:
-            self.miner.ssh.username = self.config_entry.data.get(CONF_SSH_USERNAME, "")
-            self.miner.ssh.pwd = self.config_entry.data.get(CONF_SSH_PASSWORD, "")
-        return self.miner
-
-    async def _async_update_data(self):
-        """Fetch sensors from miners."""
-        import pyasic  # lazy import to avoid blocking event loop
-
-        miner = await self.get_miner()
-
         if miner is None:
-            self._failure_count += 1
+            raise UpdateFailed(f"Could not identify miner at {self.ip}")
+        if self.username and self.password:
+            miner.set_auth(self.username, self.password)
 
-            if self._failure_count == 1:
-                _LOGGER.warning(
-                    "Miner is offline – returning zeroed data (first failure)."
-                )
-                return {
-                    **DEFAULT_DATA,
-                    "power_limit_range": {
-                        "min": self.config_entry.data.get(CONF_MIN_POWER, 15),
-                        "max": self.config_entry.data.get(CONF_MAX_POWER, 10000),
-                    },
-                }
+    async def _async_miner_is_valid(self, miner: Miner) -> bool:
+        """Return whether the miner is online and still has the expected type."""
+        try:
+            return await miner.revalidate() is True
+        except Exception:
+            return False
 
-            raise UpdateFailed("Miner Offline (consecutive failure)")
+    async def _async_update_data(self) -> MinerData:
+        if self.miner is None:
+            await self._async_setup()
+        miner = self.miner
+        if miner is None:
+            raise UpdateFailed(f"Could not identify miner at {self.ip}")
 
-        # At this point, miner is valid
-        _LOGGER.debug(f"Found miner: {self.miner}")
-
-        # Base data options to fetch
-        data_options = [
-            pyasic.DataOptions.HOSTNAME,
-            pyasic.DataOptions.MAC,
-            pyasic.DataOptions.IS_MINING,
-            pyasic.DataOptions.FW_VERSION,
-            pyasic.DataOptions.HASHRATE,
-            pyasic.DataOptions.EXPECTED_HASHRATE,
-            pyasic.DataOptions.HASHBOARDS,
-            pyasic.DataOptions.WATTAGE,
-            pyasic.DataOptions.WATTAGE_LIMIT,
-            pyasic.DataOptions.FANS,
-            pyasic.DataOptions.CONFIG,
-        ]
+        if not await self._async_miner_is_valid(miner):
+            await self._async_setup()
+            miner = self.miner
+            if miner is None:
+                raise UpdateFailed(f"Could not identify miner at {self.ip}")
+            if not await self._async_miner_is_valid(miner):
+                self.miner = None
+                raise UpdateFailed(f"Could not validate miner at {self.ip}")
 
         try:
-            miner_data = await self.miner.get_data(include=data_options)
+            data = await miner.get_data()
         except Exception as err:
-            # VNish firmware has a bug with CONFIG - retry without it
-            if "config" in str(err).lower():
-                _LOGGER.warning(
-                    f"Config fetch failed for {self.miner}, retrying without CONFIG: {err}"
-                )
-                data_options.remove(pyasic.DataOptions.CONFIG)
-                try:
-                    miner_data = await self.miner.get_data(include=data_options)
-                except Exception as retry_err:
-                    self._failure_count += 1
-                    if self._failure_count == 1:
-                        _LOGGER.warning(
-                            f"Error fetching miner data: {retry_err} – returning zeroed data (first failure)."
-                        )
-                        return {
-                            **DEFAULT_DATA,
-                            "power_limit_range": {
-                                "min": self.config_entry.data.get(CONF_MIN_POWER, 15),
-                                "max": self.config_entry.data.get(CONF_MAX_POWER, 10000),
-                            },
-                        }
-                    _LOGGER.exception(retry_err)
-                    raise UpdateFailed from retry_err
-            else:
-                self._failure_count += 1
+            raise UpdateFailed(
+                f"Error communicating with miner at {self.ip}: {err}"
+            ) from err
 
-                if self._failure_count == 1:
-                    _LOGGER.warning(
-                        f"Error fetching miner data: {err} – returning zeroed data (first failure)."
-                    )
-                    return {
-                        **DEFAULT_DATA,
-                        "power_limit_range": {
-                            "min": self.config_entry.data.get(CONF_MIN_POWER, 15),
-                            "max": self.config_entry.data.get(CONF_MAX_POWER, 10000),
-                        },
-                    }
-
-                _LOGGER.exception(err)
-                raise UpdateFailed from err
-
-        _LOGGER.debug(f"Got data: {miner_data}")
-
-        # Success: reset the failure count
-        self._failure_count = 0
-
-        try:
-            hashrate = round(float(miner_data.hashrate), 2)
-        except TypeError:
-            hashrate = None
-
-        try:
-            expected_hashrate = round(float(miner_data.expected_hashrate), 2)
-        except TypeError:
-            expected_hashrate = None
-
-        try:
-            active_preset = miner_data.config.mining_mode.active_preset.name
-        except AttributeError:
-            active_preset = None
-
-        data = {
-            "hostname": miner_data.hostname,
-            "mac": miner_data.mac,
-            "make": miner_data.make,
-            "model": miner_data.model,
-            "ip": self.miner.ip,
-            "is_mining": miner_data.is_mining,
-            "fw_ver": miner_data.fw_ver,
-            "miner_sensors": {
-                "hashrate": hashrate,
-                "ideal_hashrate": expected_hashrate,
-                "active_preset_name": active_preset,
-                "temperature": miner_data.temperature_avg,
-                "power_limit": miner_data.wattage_limit,
-                "miner_consumption": miner_data.wattage,
-                "efficiency": miner_data.efficiency_fract,
-            },
-            "board_sensors": {
-                board.slot: {
-                    "board_temperature": board.temp,
-                    "chip_temperature": board.chip_temp,
-                    "board_hashrate": round(float(board.hashrate or 0), 2),
-                }
-                for board in miner_data.hashboards
-            },
-            "fan_sensors": {
-                idx: {"fan_speed": fan.speed} for idx, fan in enumerate(miner_data.fans)
-            },
-            "config": miner_data.config,
-            "power_limit_range": {
-                "min": self.config_entry.data.get(CONF_MIN_POWER, 15),
-                "max": self.config_entry.data.get(CONF_MAX_POWER, 10000),
-            },
-        }
+        # Persist a fresh device profile so the entry can load offline next time.
+        await self._async_store_profile(data)
         return data

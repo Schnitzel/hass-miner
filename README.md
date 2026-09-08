@@ -5,15 +5,20 @@
 [![License][license-shield]](LICENSE)
 
 [![pre-commit][pre-commit-shield]][pre-commit]
-[![Black][black-shield]][black]
+[![Ruff][ruff-shield]][ruff]
+[![Conventional Commits][conventional-commits-shield]][conventional-commits]
 
-[![hacs][hacsbadge]][hacs]
+[![hacs][hacs-shield]][hacs]
 [![Project Maintenance][maintenance1-shield]][user1_profile]
 [![Project Maintenance][maintenance2-shield]][user2_profile]
 
 Control and monitor your Bitcoin Miners from Home Assistant.
 
 [![Add Integration to Home Assistant](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=miner)
+
+When the integration loads, it automatically scans Home Assistant's default
+IPv4 subnet. Supported miners appear as discovered integrations and must be
+confirmed before they are added.
 
 Great for Heat Reusage, Solar Mining or any usecase where you don't need your miners running 24/7 or with a specific wattage.
 
@@ -24,20 +29,15 @@ Works great in coordination with [ESPHome](https://www.home-assistant.io/integra
 - Antminers
 - Whatsminers
 - Avalonminers
-- Innosilicons
-- Goldshells
 - Auradine
 - BitAxe
-- IceRiver
-- Hammer
 - Braiins Firmware
 - Vnish Firmware
 - ePIC Firmware
-- HiveOS Firmware
 - LuxOS Firmware
 - Mara Firmware
 
-[Full list of supported miners](https://pyasic.readthedocs.io/en/latest/miners/supported_types/).
+[Full list of supported miners](https://256foundation.github.io/asic-rs/supported-devices/#support-matrix).
 
 **This component will set up the following platforms -**
 
@@ -70,30 +70,35 @@ This project was generated from [@oncleben31](https://github.com/oncleben31)'s [
 
 Code template was mainly taken from [@Ludeeus](https://github.com/ludeeus)'s [integration_blueprint][integration_blueprint] template.
 
-Miner control and data is handled using [@UpstreamData](https://github.com/UpstreamData)'s [pyasic](https://github.com/UpstreamData/pyasic).
+Miner control and data is handled using [@256foundation](https://github.com/256foundation)'s [asic-rs](https://github.com/256foundation/asic-rs).
 
 ---
 
+[//]: # "Links"
 [integration_blueprint]: https://github.com/custom-components/integration_blueprint
-[black]: https://github.com/psf/black
-[black-shield]: https://img.shields.io/badge/code%20style-black-000000.svg?style=for-the-badge
+[ruff]: https://github.com/astral-sh/ruff
 [buymecoffee]: https://www.buymeacoffee.com/Schnitzel
-[buymecoffeebadge]: https://img.shields.io/badge/buy%20me%20a%20coffee-donate-yellow.svg?style=for-the-badge
-[commits-shield]: https://img.shields.io/github/commit-activity/y/Schnitzel/hass-miner.svg?style=for-the-badge
 [commits]: https://github.com/Schnitzel/hass-miner/commits/main
+[conventional-commits]: https://conventionalcommits.org
 [hacs]: https://hacs.xyz
-[hacsbadge]: https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge
 [discord]: https://discord.gg/Qa5fW2R
-[discord-shield]: https://img.shields.io/discord/330944238910963714.svg?style=for-the-badge
-[exampleimg]: example.png
-[forum-shield]: https://img.shields.io/badge/community-forum-brightgreen.svg?style=for-the-badge
-[forum]: https://community.home-assistant.io/
-[license-shield]: https://img.shields.io/github/license/Schnitzel/hass-miner.svg?style=for-the-badge
-[maintenance1-shield]: https://img.shields.io/badge/maintainer-%40Schnitzel-blue.svg?style=for-the-badge
-[maintenance2-shield]: https://img.shields.io/badge/maintainer-%40b--rowan-blue.svg?style=for-the-badge
-[pre-commit]: https://github.com/pre-commit/pre-commit
-[pre-commit-shield]: https://img.shields.io/badge/pre--commit-enabled-brightgreen?style=for-the-badge
-[releases-shield]: https://img.shields.io/github/release/Schnitzel/hass-miner.svg?style=for-the-badge
 [releases]: https://github.com/Schnitzel/hass-miner/releases
 [user1_profile]: https://github.com/Schnitzel
 [user2_profile]: https://github.com/b-rowan
+[forum]: https://community.home-assistant.io/
+[pre-commit]: https://github.com/pre-commit/pre-commit
+[//]: # "Shields"
+[ruff-shield]: https://img.shields.io/badge/-Ruff-D7FF64.svg?style=for-the-badge&color=orange
+[buymecoffee-shield]: https://img.shields.io/badge/buy%20me%20a%20coffee-donate.svg?style=for-the-badge&color=orange
+[commits-shield]: https://img.shields.io/github/commit-activity/y/Schnitzel/hass-miner.svg?style=for-the-badge&color=orange
+[conventional-commits-shield]: https://img.shields.io/badge/Conventional%20Commits-1.0.0-orange?style=for-the-badge&color=orange
+[hacs-shield]: https://img.shields.io/badge/HACS-Custom.svg?style=for-the-badge&color=orange
+[discord-shield]: https://img.shields.io/discord/330944238910963714.svg?style=for-the-badge&color=orange
+[forum-shield]: https://img.shields.io/badge/community-forum.svg?style=for-the-badge&color=orange
+[license-shield]: https://img.shields.io/github/license/Schnitzel/hass-miner.svg?style=for-the-badge&color=orange
+[maintenance1-shield]: https://img.shields.io/badge/maintainer-%40Schnitzel.svg?style=for-the-badge&color=orange
+[maintenance2-shield]: https://img.shields.io/badge/maintainer-%40b--rowan.svg?style=for-the-badge&color=orange
+[pre-commit-shield]: https://img.shields.io/badge/pre--commit-enabled?style=for-the-badge&color=orange
+[releases-shield]: https://img.shields.io/github/release/Schnitzel/hass-miner.svg?style=for-the-badge&color=orange
+[//]: # "Other"
+[exampleimg]: example.png

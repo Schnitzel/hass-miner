@@ -1,90 +1,80 @@
-"""The Miner integration."""
+"""ASIC Miner integration for Home Assistant."""
+
 from __future__ import annotations
 
-import sys
-
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import Platform
+from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers.typing import ConfigType
 
-from .const import CONF_IP
-from .const import DOMAIN
-from .const import PYASIC_VERSION
+from .const import CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL, DOMAIN
+from .coordinator import MinerCoordinator
+from .discovery import async_discover_miners
 
-PLATFORMS: list[Platform] = [
+CONFIG_SCHEMA = cv.empty_config_schema(DOMAIN)
+
+PLATFORMS = [
     Platform.SENSOR,
+    Platform.BINARY_SENSOR,
     Platform.SWITCH,
+    Platform.BUTTON,
     Platform.NUMBER,
-    # Platform.SELECT,  # TODO: select.py needs proper implementation
 ]
 
 
-def _ensure_pyasic():
-    """Ensure pyasic is installed and imported (runs in executor)."""
-
-    def try_import():
-        try:
-            from importlib.metadata import version
-            import pyasic
-            if not hasattr(pyasic, 'get_miner'):
-                raise ImportError("pyasic module incomplete")
-            if version("pyasic") != PYASIC_VERSION:
-                raise ImportError("Version mismatch")
-            return pyasic
-        except Exception:
-            return None
-
-    pyasic = try_import()
-    if pyasic:
-        return pyasic
-
-    # Need to install/reinstall
-    from .patch import install_package
-    install_package(f"pyasic=={PYASIC_VERSION}", force_reinstall=True)
-
-    # Clear any cached broken imports
-    for mod_name in list(sys.modules.keys()):
-        if mod_name.startswith('pyasic'):
-            del sys.modules[mod_name]
-
-    import pyasic
-    return pyasic
-
-
-async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
-    """Set up Miner from a config entry."""
-    # Import pyasic in executor to avoid blocking the event loop
-    pyasic = await hass.async_add_executor_job(_ensure_pyasic)
-
-    # Import coordinator and services AFTER pyasic is installed
-    from .coordinator import MinerCoordinator
-    from .services import async_setup_services
-
-    miner_ip = config_entry.data[CONF_IP]
-    miner = await pyasic.get_miner(miner_ip)
-
-    if miner is None:
-        raise ConfigEntryNotReady("Miner could not be found.")
-
-    m_coordinator = MinerCoordinator(hass, config_entry)
-    hass.data.setdefault(DOMAIN, {})[config_entry.entry_id] = m_coordinator
-
-    await m_coordinator.async_config_entry_first_refresh()
-
-    await hass.config_entries.async_forward_entry_setups(config_entry, PLATFORMS)
-
-    await async_setup_services(hass)
-
+async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
+    """Set up automatic network discovery."""
+    hass.async_create_background_task(
+        async_discover_miners(hass),
+        "Discover ASIC miners",
+    )
     return True
 
 
-async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
-    """Unload a config entry."""
-    unload_ok = await hass.config_entries.async_unload_platforms(
-        config_entry, PLATFORMS
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Set up ASIC Miner from a config entry."""
+    coordinator = MinerCoordinator(
+        hass,
+        ip=entry.data[CONF_HOST],
+        entry_id=entry.entry_id,
+        username=entry.data.get(CONF_USERNAME),
+        password=entry.data.get(CONF_PASSWORD),
+        scan_interval=entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL),
     )
-    if unload_ok:
-        hass.data[DOMAIN].pop(config_entry.entry_id)
 
+    # Offline resilience: load any cached device profile first, then attempt a
+    # refresh. Unlike async_config_entry_first_refresh(), a failed refresh does
+    # not abort setup as long as we have *something* to build entities from
+    # (live data or a cached profile) — the entry loads with entities showing
+    # ``unavailable`` and re-populates once the miner answers. Only raise
+    # ConfigEntryNotReady when we have neither a successful poll nor a cache.
+    await coordinator.async_load_profile()
+    await coordinator.async_refresh()
+    if (
+        not coordinator.last_update_success
+        and coordinator.profile is None
+        and coordinator.data is None
+    ):
+        raise ConfigEntryNotReady(
+            f"Could not reach miner at {entry.data[CONF_HOST]} and no cached "
+            "device profile is available yet"
+        )
+
+    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    entry.async_on_unload(entry.add_update_listener(_async_reload_entry))
+    return True
+
+
+async def _async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Reload the config entry when its options change."""
+    await hass.config_entries.async_reload(entry.entry_id)
+
+
+async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Unload a config entry."""
+    if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
+        hass.data[DOMAIN].pop(entry.entry_id)
     return unload_ok

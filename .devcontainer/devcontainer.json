@@ -1,0 +1,40 @@
+{
+  "name": "ASIC Miner HA Integration",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "overrideCommand": false,
+  "remoteUser": "vscode",
+  "postStartCommand": "bash devcontainer_bootstrap",
+  "runArgs": ["-e", "GIT_EDITOR=code --wait", "--privileged", "--network=host"],
+  "workspaceFolder": "/workspaces/hass-asic-rs",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/hass-asic-rs,type=bind,consistency=cached",
+  "containerEnv": {
+    "WORKSPACE_DIRECTORY": "/workspaces/hass-asic-rs"
+  },
+  "mounts": [
+    "type=volume,target=/var/lib/docker",
+    "type=volume,target=/var/lib/containerd",
+    "type=volume,target=/mnt/supervisor",
+    "type=tmpfs,target=/tmp"
+  ],
+  "customizations": {
+    "vscode": {
+      "extensions": [],
+      "settings": {
+        "terminal.integrated.profiles.linux": {
+          "zsh": { "path": "/usr/bin/zsh" }
+        },
+        "terminal.integrated.defaultProfile.linux": "zsh",
+        "editor.formatOnSave": true,
+        "editor.formatOnType": true,
+        "editor.formatOnPaste": false,
+        "files.trimTrailingWhitespace": true,
+        "python.testing.pytestEnabled": true,
+        "python.testing.pytestArgs": ["tests"],
+        "python.defaultInterpreterPath": "/usr/bin/python3"
+      }
+    }
+  }
+}

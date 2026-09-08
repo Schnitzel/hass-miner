@@ -1,0 +1,9 @@
+services:
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:stable
+    container_name: hass-miner-dev
+    network_mode: host
+    volumes:
+      - ./config:/config
+      - ./custom_components:/config/custom_components
+    restart: "no"

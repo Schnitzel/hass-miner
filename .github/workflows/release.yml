@@ -1,35 +1,68 @@
-name: "Release"
+name: Release
 
 on:
-  release:
-    types:
-      - "published"
-
-permissions: {}
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version number (without the v prefix, e.g. 1.2.3)"
+        required: true
+        type: string
 
 jobs:
   release:
-    name: "Release"
-    runs-on: "ubuntu-latest"
+    name: Create Release
+    runs-on: ubuntu-latest
     permissions:
       contents: write
+
     steps:
-      - name: "Checkout the repository"
-        uses: "actions/checkout@v4.2.0"
-
-      - name: "Adjust version number"
-        shell: "bash"
-        run: |
-          yq -i -o json '.version="${{ github.event.release.tag_name }}"' \
-            "${{ github.workspace }}/custom_components/miner/manifest.json"
-
-      - name: "ZIP the integration directory"
-        shell: "bash"
-        run: |
-          cd "${{ github.workspace }}/custom_components/miner"
-          zip miner.zip -r ./
-
-      - name: "Upload the ZIP file to the release"
-        uses: softprops/action-gh-release@v2.0.8
+      - name: Checkout
+        uses: actions/checkout@v6
         with:
-          files: ${{ github.workspace }}/custom_components/miner/miner.zip
+          fetch-depth: 0 # full history required for git-cliff
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Update manifest.json
+        run: |
+          jq --arg v "${{ inputs.version }}" '.version = $v' \
+            custom_components/asic_miner/manifest.json > /tmp/manifest.json
+          mv /tmp/manifest.json custom_components/asic_miner/manifest.json
+
+      - name: Update pyproject.toml
+        run: |
+          sed -i 's/^version = ".*"/version = "${{ inputs.version }}"/' pyproject.toml
+
+      - name: Generate release notes (this release only)
+        uses: orhun/git-cliff-action@v4
+        with:
+          config: cliff.toml
+          args: --tag "v${{ inputs.version }}" --unreleased --strip all --output release_notes.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate full CHANGELOG.md
+        uses: orhun/git-cliff-action@v4
+        with:
+          config: cliff.toml
+          args: --tag "v${{ inputs.version }}" --output CHANGELOG.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Commit version bump and changelog
+        run: |
+          git add custom_components/asic_miner/manifest.json pyproject.toml CHANGELOG.md
+          git commit -m "chore(release): prepare for v${{ inputs.version }}"
+          git tag "v${{ inputs.version }}"
+          git push origin HEAD
+          git push origin "v${{ inputs.version }}"
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: "v${{ inputs.version }}"
+          name: "v${{ inputs.version }}"
+          body_path: release_notes.md
