@@ -64,7 +64,7 @@ pillow==12.2.0
 propcache==0.5.2
 psutil==7.2.2
 psutil-home-assistant==0.0.1
-pyasic-rs==0.5.4
+pyasic-rs==0.8.0
 pycares==5.0.1
 pycognito==2024.5.1
 pycparser==3.0

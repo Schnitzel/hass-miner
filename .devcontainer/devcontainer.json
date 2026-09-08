@@ -6,9 +6,8 @@
   },
   "overrideCommand": false,
   "remoteUser": "vscode",
-  "appPort": ["8123:8123"],
   "postStartCommand": "bash devcontainer_bootstrap",
-  "runArgs": ["-e", "GIT_EDITOR=code --wait", "--privileged"],
+  "runArgs": ["-e", "GIT_EDITOR=code --wait", "--privileged", "--network=host"],
   "workspaceFolder": "/workspaces/hass-asic-rs",
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/hass-asic-rs,type=bind,consistency=cached",
   "containerEnv": {

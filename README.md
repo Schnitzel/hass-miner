@@ -16,6 +16,10 @@ Control and monitor your Bitcoin Miners from Home Assistant.
 
 [![Add Integration to Home Assistant](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=miner)
 
+When the integration loads, it automatically scans Home Assistant's default
+IPv4 subnet. Supported miners appear as discovered integrations and must be
+confirmed before they are added.
+
 Great for Heat Reusage, Solar Mining or any usecase where you don't need your miners running 24/7 or with a specific wattage.
 
 Works great in coordination with [ESPHome](https://www.home-assistant.io/integrations/esphome/) for Sensors (like temperature) and [Grafana](https://github.com/hassio-addons/addon-grafana) for Dashboards.

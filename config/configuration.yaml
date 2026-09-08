@@ -1,6 +1,9 @@
 # https://www.home-assistant.io/integrations/default_config/
 default_config:
 
+# Loading the integration starts its active LAN discovery scan.
+miner:
+
 # https://www.home-assistant.io/integrations/logger/
 logger:
   default: info

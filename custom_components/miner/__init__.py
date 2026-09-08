@@ -6,9 +6,14 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers.typing import ConfigType
 
 from .const import CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL, DOMAIN
 from .coordinator import MinerCoordinator
+from .discovery import async_discover_miners
+
+CONFIG_SCHEMA = cv.empty_config_schema(DOMAIN)
 
 PLATFORMS = [
     Platform.SENSOR,
@@ -17,6 +22,15 @@ PLATFORMS = [
     Platform.BUTTON,
     Platform.NUMBER,
 ]
+
+
+async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
+    """Set up automatic network discovery."""
+    hass.async_create_background_task(
+        async_discover_miners(hass),
+        "Discover ASIC miners",
+    )
+    return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
