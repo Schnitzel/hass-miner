@@ -226,7 +226,10 @@ class MinerCoordinator(DataUpdateCoordinator):
                 board.slot: {
                     "board_temperature": board.temp,
                     "chip_temperature": board.chip_temp,
-                    "board_hashrate": round(float(board.hashrate or 0), 2),
+                    "board_hashrate": float(board.hashrate or 0),
+                    "board_hashrate_unit": (
+                        str(board.hashrate.unit) if board.hashrate else None
+                    ),
                 }
                 for board in miner_data.hashboards
             },

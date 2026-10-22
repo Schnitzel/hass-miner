@@ -71,6 +71,7 @@ ENTITY_DESCRIPTION_KEY_MAP: dict[str, SensorEntityDescription] = {
     "board_hashrate": SensorEntityDescription(
         key="Board Hashrate",
         native_unit_of_measurement=TERA_HASH_PER_SECOND,
+        suggested_display_precision=2,
         state_class=SensorStateClass.MEASUREMENT,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
@@ -259,6 +260,20 @@ class MinerBoardSensor(CoordinatorEntity[MinerCoordinator], SensorEntity):
     def native_value(self) -> StateType:
         """Return the state of the sensor."""
         return self._sensor_data
+
+    @property
+    def native_unit_of_measurement(self) -> str | None:
+        """Return the unit reported by the miner for the board hashrate."""
+        if self._sensor == "board_hashrate":
+            try:
+                unit = self.coordinator.data["board_sensors"][self._board_num][
+                    "board_hashrate_unit"
+                ]
+            except LookupError:
+                unit = None
+            if unit:
+                return unit
+        return self.entity_description.native_unit_of_measurement
 
     @property
     def available(self) -> bool:
