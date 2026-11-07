@@ -12,7 +12,7 @@ from homeassistant.helpers import device_registry
 from homeassistant.helpers import entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
-from homeassistant.components.sensor import EntityCategory
+from homeassistant.const import EntityCategory
 from homeassistant.const import UnitOfPower
 
 from .const import DOMAIN
