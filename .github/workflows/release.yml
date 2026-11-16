@@ -29,8 +29,8 @@ jobs:
       - name: Update manifest.json
         run: |
           jq --arg v "${{ inputs.version }}" '.version = $v' \
-            custom_components/asic_miner/manifest.json > /tmp/manifest.json
-          mv /tmp/manifest.json custom_components/asic_miner/manifest.json
+            custom_components/miner/manifest.json > /tmp/manifest.json
+          mv /tmp/manifest.json custom_components/miner/manifest.json
 
       - name: Update pyproject.toml
         run: |
@@ -54,7 +54,7 @@ jobs:
 
       - name: Commit version bump and changelog
         run: |
-          git add custom_components/asic_miner/manifest.json pyproject.toml CHANGELOG.md
+          git add custom_components/miner/manifest.json pyproject.toml CHANGELOG.md
           git commit -m "chore(release): prepare for v${{ inputs.version }}"
           git tag "v${{ inputs.version }}"
           git push origin HEAD
