@@ -1,146 +1,63 @@
-"""Support for Bitcoin ASIC miners."""
+"""Number platform for ASIC Miner integration."""
+
 from __future__ import annotations
 
-import logging
-
-from homeassistant.components.number import NumberEntityDescription, NumberDeviceClass
-from homeassistant.components.number import NumberEntity
+from homeassistant.components.number import NumberEntity, NumberMode
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import callback
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers import device_registry
-from homeassistant.helpers import entity
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
-from homeassistant.components.sensor import EntityCategory
 from homeassistant.const import UnitOfPower
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DOMAIN
 from .coordinator import MinerCoordinator
+from .entity import MinerEntity
 
-_LOGGER = logging.getLogger(__name__)
 
+class PowerLimitNumber(MinerEntity, NumberEntity):
+    """Set the miner's power limit in watts."""
 
-NUMBER_DESCRIPTION_KEY_MAP: dict[str, NumberEntityDescription] = {
-    "power_limit": NumberEntityDescription(
-        key="Power Limit",
-        native_unit_of_measurement=UnitOfPower.WATT,
-        device_class=NumberDeviceClass.POWER,
-        entity_category=EntityCategory.CONFIG,
-    )
-}
+    _attr_name = "Power Limit"
+    _attr_icon = "mdi:flash"
+    _attr_native_unit_of_measurement = UnitOfPower.WATT
+    _attr_native_min_value = 1.0
+    _attr_native_max_value = 10_000.0
+    _attr_native_step = 10.0
+    _attr_mode = NumberMode.BOX
+
+    def __init__(self, coordinator: MinerCoordinator) -> None:
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{self._device_unique_id}_power_limit"
+
+    @property
+    def native_value(self) -> float | None:
+        data = self.coordinator.data
+        if data is None:
+            return None
+        if data.tuning_target is not None:
+            watts = data.tuning_target.watts
+            if watts is not None:
+                return watts
+        return data.wattage
+
+    async def async_set_native_value(self, value: float) -> None:
+        await self.coordinator.miner.set_power_limit(value)
+        await self.coordinator.async_request_refresh()
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
+    entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Add sensors for passed config_entry in HA."""
-    coordinator: MinerCoordinator = hass.data[DOMAIN][config_entry.entry_id]
+    coordinator: MinerCoordinator = hass.data[DOMAIN][entry.entry_id]
 
-    await coordinator.async_config_entry_first_refresh()
-    if coordinator.miner.supports_autotuning:
-        async_add_entities(
-            [
-                MinerPowerLimitNumber(
-                    coordinator=coordinator,
-                    entity_description=NUMBER_DESCRIPTION_KEY_MAP["power_limit"],
-                )
-            ]
-        )
+    entities: list[MinerEntity] = []
 
+    # coordinator.miner is None when the miner was unreachable at startup (the
+    # entry still loads for offline resilience). Capability-gated entities can't
+    # be probed without a connection, so they're skipped here and appear after
+    # the first successful connection + a reload.
+    if coordinator.miner is not None and coordinator.miner.supports_set_power_limit:
+        entities.append(PowerLimitNumber(coordinator))
 
-class MinerPowerLimitNumber(CoordinatorEntity[MinerCoordinator], NumberEntity):
-    """Defines a Miner Number to set the Power Limit of the Miner."""
-
-    def __init__(
-        self, coordinator: MinerCoordinator, entity_description: NumberEntityDescription
-    ):
-        """Initialize the PowerLimit entity."""
-        super().__init__(coordinator=coordinator)
-        self._attr_native_value = self.coordinator.data["miner_sensors"]["power_limit"]
-        self.entity_description = entity_description
-
-    @property
-    def name(self) -> str | None:
-        """Return name of the entity."""
-        return f"{self.coordinator.config_entry.title} Power Limit"
-
-    @property
-    def device_info(self) -> entity.DeviceInfo:
-        """Return device info."""
-        return entity.DeviceInfo(
-            identifiers={(DOMAIN, self.coordinator.data["mac"])},
-            connections={
-                ("ip", self.coordinator.data["ip"]),
-                (device_registry.CONNECTION_NETWORK_MAC, self.coordinator.data["mac"]),
-            },
-            configuration_url=f"http://{self.coordinator.data['ip']}",
-            manufacturer=self.coordinator.data["make"],
-            model=self.coordinator.data["model"],
-            sw_version=self.coordinator.data["fw_ver"],
-            name=f"{self.coordinator.config_entry.title}",
-        )
-
-    @property
-    def unique_id(self) -> str | None:
-        """Return device UUID."""
-        return f"{self.coordinator.data['mac']}-power_limit"
-
-    @property
-    def native_min_value(self) -> float | None:
-        """Return device minimum value."""
-        return self.coordinator.data["power_limit_range"]["min"]
-
-    @property
-    def native_max_value(self) -> float | None:
-        """Return device maximum value."""
-        return self.coordinator.data["power_limit_range"]["max"]
-
-    @property
-    def native_step(self) -> float | None:
-        """Return device increment step."""
-        return 100
-
-    @property
-    def native_unit_of_measurement(self):
-        """Return device unit of measurement."""
-        return "W"
-
-    async def async_set_native_value(self, value):
-        """Update the current value."""
-        import pyasic  # lazy import to avoid blocking event loop
-
-        miner = self.coordinator.miner
-
-        _LOGGER.debug(
-            f"{self.coordinator.config_entry.title}: setting power limit to {value}."
-        )
-
-        if not miner.supports_autotuning:
-            raise TypeError(
-                f"{self.coordinator.config_entry.title}: Tuning not supported."
-            )
-
-        result = await miner.set_power_limit(int(value))
-
-        if not result:
-            raise pyasic.APIError("Failed to set wattage.")
-
-        self._attr_native_value = value
-        self.async_write_ha_state()
-
-    @callback
-    def _handle_coordinator_update(self) -> None:
-        if self.coordinator.data["miner_sensors"]["power_limit"] is not None:
-            self._attr_native_value = self.coordinator.data["miner_sensors"][
-                "power_limit"
-            ]
-
-        super()._handle_coordinator_update()
-
-    @property
-    def available(self) -> bool:
-        """Return if entity is available or not."""
-        return self.coordinator.available
+    async_add_entities(entities)

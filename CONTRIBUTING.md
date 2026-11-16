@@ -42,6 +42,19 @@ Report a bug by [opening a new issue](../../issues/new/choose); it's that easy!
 
 People _love_ thorough bug reports. I'm not even kidding.
 
+## Run locally with Docker
+
+Run `docker compose up -d` and open <http://localhost:8123>. The integration
+source and Home Assistant configuration are mounted from this checkout.
+Home Assistant installs the integration's requirements from its manifest on
+startup.
+
+The remote debugger is configured but does not start automatically. After Home
+Assistant finishes startup, run the `debugpy.start` action in Developer Tools
+and attach your debugger to port 5678. Starting debugpy before dependency
+installation can cause its subprocess handling to prevent `uv` from installing
+packages.
+
 ## Use a Consistent Coding Style
 
 Use [black](https://github.com/ambv/black) and [prettier](https://prettier.io/)
