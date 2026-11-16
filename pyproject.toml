@@ -1,6 +1,6 @@
 [project]
 name = "hass-miner"
-version = "1.2.7-rc2"
+version = "2.0.0"
 description = "A home assistant integration for asic miners, using asic-rs"
 authors = [
     {name = "Michael Schmid", email = "michael@amazee.com"}
