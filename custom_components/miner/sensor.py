@@ -229,10 +229,10 @@ def _board_sensors(position: int) -> list[MinerSensorEntityDescription]:
             state_class=SensorStateClass.MEASUREMENT,
             suggested_display_precision=1,
             value_fn=lambda d, _n=n: _board_value(
-                d, _n, lambda b: b.intake_temperature
+                d, _n, lambda b: b.inlet_chip_temperature
             ),
             available_fn=lambda d, _n=n: (
-                _board_value(d, _n, lambda b: b.intake_temperature) is not None
+                _board_value(d, _n, lambda b: b.inlet_chip_temperature) is not None
             ),
         ),
         MinerSensorEntityDescription(
@@ -243,10 +243,10 @@ def _board_sensors(position: int) -> list[MinerSensorEntityDescription]:
             state_class=SensorStateClass.MEASUREMENT,
             suggested_display_precision=1,
             value_fn=lambda d, _n=n: _board_value(
-                d, _n, lambda b: b.outlet_temperature
+                d, _n, lambda b: b.outlet_chip_temperature
             ),
             available_fn=lambda d, _n=n: (
-                _board_value(d, _n, lambda b: b.outlet_temperature) is not None
+                _board_value(d, _n, lambda b: b.outlet_chip_temperature) is not None
             ),
         ),
         MinerSensorEntityDescription(

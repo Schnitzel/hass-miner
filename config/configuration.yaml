@@ -10,4 +10,6 @@ logger:
   logs:
     custom_components.miner: debug
 debugpy:
-  start: true
+  # Start manually with the debugpy.start action after HA finishes startup.
+  # Starting early breaks uv subprocesses used to install integration requirements.
+  start: false
