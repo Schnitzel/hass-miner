@@ -12,7 +12,7 @@ aiozoneinfo==0.2.3
 annotated-types==0.7.0
 annotatedyaml==1.0.2
 anyio==4.13.0
-astral==2.2
+astral==3.2
 async-interrupt==1.2.2
 atomicwrites-homeassistant==1.4.1
 attrs==26.1.0
